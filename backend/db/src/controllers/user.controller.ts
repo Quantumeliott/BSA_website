@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { prisma } from '../prisma'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 
 const SALT_ROUNDS = 10
 
