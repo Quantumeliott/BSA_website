@@ -702,37 +702,35 @@ const DEMO_WALLET_ADDRESS = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
 async function handleRegister() {
   const name = document.getElementById('reg-name').value;
   const email = document.getElementById('reg-email').value;
-  const role = document.getElementById('reg-role').value;
+  const password = document.getElementById('reg-password').value;
 
-  if (!name || !email) return toast("Veuillez remplir votre nom et email !");
+  if (!name || !email || !password) return toast("Veuillez remplir tous les champs !");
   
-  toast("Approbation via Wallet XRPL...");
+  toast("Création du compte...");
   
   try {
-    // On appelle ta vraie route d'upsert: POST /users
     const res = await fetch(`${API_URL}/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        xrplAddress: DEMO_WALLET_ADDRESS, // Le backend exige cette info
-        name: name, 
         email: email, 
-        role: role.toUpperCase() 
+        password: password, // <--- C'était lui le grand absent qui causait l'erreur 400 !
+        xrplAddress: DEMO_WALLET_ADDRESS // On le garde optionnellement pour le Web3
       })
     });
     
     if (res.ok) {
-      toast("Compte XRPL créé avec succès !");
-      localStorage.setItem('quantum_user', DEMO_WALLET_ADDRESS);
-      showPage('dashboard');
-      showDP('overview');
+      toast("Compte créé avec succès ! Connectez-vous.");
+      switchTab('login');
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-password').value = '';
     } else {
       const data = await res.json();
       toast("Erreur: " + (data.error || "Échec de l'inscription"));
     }
   } catch (err) {
-    toast("Erreur de connexion au serveur Render.");
     console.error(err);
+    toast("Erreur de connexion au serveur.");
   }
 }
 
