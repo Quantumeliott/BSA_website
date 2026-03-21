@@ -29,27 +29,26 @@ export async function upsertUser(req: Request, res: Response) {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const user = await prisma.user.upsert({
-      where: { email: email },
-      update: { 
-        password: hashedPassword, 
-        name: name || undefined 
-      },
-      create: {
+    // On utilise create au lieu d'upsert pour être plus clair sur les erreurs
+    const user = await prisma.user.create({
+      data: {
         email: email,
         password: hashedPassword,
         name: name || null,
-        xrplAddress: null // <--- TRÈS IMPORTANT : On laisse vide pour la création
+        xrplAddress: null // Obligatoire pour éviter les doublons sur la démo
       },
     });
 
     res.status(201).json({ id: user.id, email: user.email });
   } catch (err: any) {
-    console.error("ERREUR DÉTAILLÉE :", err);
+    // Si l'email est déjà pris, Prisma renvoie le code P2002
     if (err.code === 'P2002') {
-      return res.status(409).json({ error: "Cet email est déjà utilisé par un autre compte." });
+      return res.status(409).json({ error: "Cet email est déjà utilisé." });
     }
-    res.status(500).json({ error: "Erreur serveur", details: err.message });
+    
+    // Pour toute autre erreur (comme ton erreur 42P05), on logue proprement
+    console.error("ERREUR CRITIQUE DATABASE :", err.message);
+    res.status(500).json({ error: "Erreur de connexion base de données", tech: err.code });
   }
 }
 
