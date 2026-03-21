@@ -7,150 +7,39 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  RESEARCHER
-  STUDENT
-  PROVIDER
-  INSTITUTION
-  ADMIN
-}
-
-enum InstrumentType {
-  TELESCOPE
-  QUANTUM
-  SPECTROGRAPH
-  RADIO
-  OTHER
-}
-
-enum InstrumentStatus {
-  ONLINE
-  BUSY
-  OFFLINE
-  MAINTENANCE
-}
-
-enum SessionStatus {
-  PENDING
-  ACTIVE
-  COMPLETED
-  CANCELLED
-  DISPUTED
-  EXPIRED
-}
-
-enum EscrowType {
-  ESCROW
-  PAYMENT_CHANNEL
-}
-
 model User {
-  id           String    @id @default(uuid())
-  xrplAddress  String    @unique
-  email        String?   @unique
-  name         String?
-  role         Role      @default(RESEARCHER)
-  institution  String?
-  avatarUrl    String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String
+  xrplAddress  String?      @unique 
 
-  sessions     Session[]
   instruments  Instrument[]
-  notifications Notification[]
+  sessions     Session[]
 }
 
 model Instrument {
-  id           String           @id @default(uuid())
+  id           String       @id @default(uuid())
   name         String
-  type         InstrumentType
-  status       InstrumentStatus @default(ONLINE)
+  type         String       
+  agenda       Json?        
   location     String
   country      String
-  latitude     Float?
-  longitude    Float?
   priceXRP     Float
-  rateUnit     String
-  minSession   Int
-  specs        Json?
-  imageUrl     String?
-  description  String?
+  image        String?      
 
   providerId   String?
-  provider     User?            @relation(fields: [providerId], references: [id])
-
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-
+  provider     User?        @relation(fields: [providerId], references: [id])
+  
   sessions     Session[]
-  queue        QueueEntry[]
 }
 
 model Session {
-  id              String        @id @default(uuid())
-  userId          String
-  instrumentId    String
-
-  escrowType      EscrowType
-  xrplTxHash      String?
-  channelId       String?
-  escrowSequence  Int?
-  conditionHex    String?
-  status          SessionStatus @default(PENDING)
-  durationSec     Int
-  actualSec       Float?
-  actualShots     Int?
-  xrpLocked       Float
-  xrpSpent        Float?
-  xrpRefunded     Float?
-
-  oracleSessionId String?
-  receipt         Json?
-  fulfillmentHex  String?
-
-  startedAt       DateTime?
-  endedAt         DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  user            User          @relation(fields: [userId], references: [id])
-  instrument      Instrument    @relation(fields: [instrumentId], references: [id])
-  claims          PaymentClaim[]
-}
-
-model PaymentClaim {
-  id            String   @id @default(uuid())
-  sessionId     String
-  shotNumber    Int
-  cumulativeXRP Float
-  signedClaim   String
-  submittedAt   DateTime @default(now())
-
-  session       Session  @relation(fields: [sessionId], references: [id])
-}
-
-model QueueEntry {
-  id           String     @id @default(uuid())
-  instrumentId String
+  id           String       @id @default(uuid())
   userId       String
-  requestedSec Int
-  budgetXRP    Float
-  position     Int
-  createdAt    DateTime   @default(now())
-  expiresAt    DateTime
-
-  instrument   Instrument @relation(fields: [instrumentId], references: [id])
-}
-
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String
-  title     String
-  body      String
-  read      Boolean  @default(false)
-  metadata  Json?
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id])
+  instrumentId String
+  status       String       @default("PENDING")
+  createdAt    DateTime     @default(now())
+  
+  user         User         @relation(fields: [userId], references: [id])
+  instrument   Instrument   @relation(fields: [instrumentId], references: [id])
 }
