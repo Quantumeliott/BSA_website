@@ -661,27 +661,22 @@ td{font-size:11px;padding:11px 14px;color:var(--text);}
 
 <script>
 // =====================================================
-// ROUTER
+// 1. ROUTER & UI (Interface visuelle)
 // =====================================================
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  window.scrollTo(0,0);
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo(0, 0);
   checkMobileBtn();
 }
-function checkMobileBtn(){
-  const btn=document.getElementById('mobile-menu-btn');
-  if(btn) btn.style.display=window.innerWidth<=768?'flex':'none';
+
+function checkMobileBtn() {
+  const btn = document.getElementById('mobile-menu-btn');
+  if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
 }
-window.addEventListener('resize',checkMobileBtn);
+window.addEventListener('resize', checkMobileBtn);
 checkMobileBtn();
 
-// =====================================================
-// AUTH & API CONNECTION
-// =====================================================
-const API_URL = "https://bsa-website.onrender.com";
-
-// --- FONCTIONS VISUELLES (UI) ---
 function showAuth(tab) {
   showPage('auth');
   switchTab(tab || 'login');
@@ -696,177 +691,188 @@ function switchTab(t) {
   });
 }
 
-// --- FONCTIONS API (SERVEUR) ---
+// =====================================================
+// 2. AUTHENTICATION & API (Connexion au Backend)
+// =====================================================
+const API_URL = "https://bsa-website.onrender.com"; // Modifie par /api à la fin si tu as configuré un préfixe dans Express
+
+// L'adresse de démo pour simuler le wallet XRPL connecté
+const DEMO_WALLET_ADDRESS = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
+
 async function handleRegister() {
   const name = document.getElementById('reg-name').value;
   const email = document.getElementById('reg-email').value;
-  const password = document.getElementById('reg-password').value;
   const role = document.getElementById('reg-role').value;
 
-  if(!name || !email || !password) return toast("Veuillez remplir tous les champs !");
+  if (!name || !email) return toast("Veuillez remplir votre nom et email !");
   
-  toast("Création du compte...");
+  toast("Approbation via Wallet XRPL...");
+  
   try {
-    const res = await fetch(`${API_URL}/register`, {
+    // On appelle ta vraie route d'upsert: POST /users
+    const res = await fetch(`${API_URL}/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role })
+      body: JSON.stringify({ 
+        xrplAddress: DEMO_WALLET_ADDRESS, // Le backend exige cette info
+        name: name, 
+        email: email, 
+        role: role.toUpperCase() 
+      })
     });
     
-    const data = await res.json();
-
-    if(res.ok) {
-      toast("Compte créé ! Connectez-vous.");
-      switchTab('login');
-      document.getElementById('login-email').value = email;
+    if (res.ok) {
+      toast("Compte XRPL créé avec succès !");
+      localStorage.setItem('quantum_user', DEMO_WALLET_ADDRESS);
+      showPage('dashboard');
+      showDP('overview');
     } else {
+      const data = await res.json();
       toast("Erreur: " + (data.error || "Échec de l'inscription"));
     }
   } catch (err) {
-    toast("Le serveur Render se réveille... réessayez dans 30s.");
+    toast("Erreur de connexion au serveur Render.");
+    console.error(err);
   }
 }
 
 async function handleLogin() {
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
-
-  if(!email || !password) return toast("Email et mot de passe requis");
-
-  toast("Vérification...");
+  // Dans un vrai projet Web3, on ne demande pas l'email/mdp, on connecte juste le wallet.
+  // Ici, on simule l'action du wallet.
+  toast("Vérification sur la blockchain...");
+  
   try {
-    const res = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    // On appelle ta vraie route de récupération: GET /users/:xrplAddress
+    const res = await fetch(`${API_URL}/users/${DEMO_WALLET_ADDRESS}`);
 
-    const data = await res.json();
-
-    if(res.ok) {
-      localStorage.setItem('quantum_token', data.token);
-      toast("Connexion réussie ✓");
+    if (res.ok) {
+      const userData = await res.json();
+      localStorage.setItem('quantum_user', DEMO_WALLET_ADDRESS);
+      toast(`Bienvenue ${userData.name || 'Chercheur'} !`);
       showPage('dashboard');
       showDP('overview');
     } else {
-      toast("Identifiants incorrects");
+      toast("Portefeuille non reconnu. Veuillez créer un compte.");
+      switchTab('register');
     }
   } catch (err) {
-    toast("Erreur de connexion au serveur Render.");
+    toast("Erreur de communication avec le serveur.");
   }
 }
 
-function logout() {
-  localStorage.removeItem('quantum_token');
-  showPage('landing');
-  toast("Déconnecté.");
+async function walletLogin() {
+  // Le bouton "Connect XRPL Wallet" déclenche la même logique que handleLogin
+  handleLogin();
 }
 
-function walletLogin() {
-  toast('Connecting XRPL wallet...');
-  setTimeout(() => {
-    showPage('dashboard');
-    showDP('overview');
-    toast('Connected: rHb9...mL6 ✓');
-  }, 1000);
+function logout() {
+  localStorage.removeItem('quantum_user');
+  showPage('landing');
+  toast("Portefeuille déconnecté.");
 }
+
 // =====================================================
-// DASHBOARD PAGES
+// 3. DASHBOARD & INTERFACE LOGIC
 // =====================================================
-const dpTitles={overview:'Overview',browse:'Browse Instruments',bookings:'My Sessions',wallet:'Wallet',settings:'Settings'};
-function showDP(id){
-  document.querySelectorAll('.dash-page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('dp-'+id).classList.add('active');
-  document.getElementById('dp-title').textContent=dpTitles[id]||id;
-  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+const dpTitles = {overview: 'Overview', browse: 'Browse Instruments', bookings: 'My Sessions', wallet: 'Wallet', settings: 'Settings'};
+
+function showDP(id) {
+  document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('dp-' + id);
+  if(target) target.classList.add('active');
+  
+  const titleEl = document.getElementById('dp-title');
+  if(titleEl) titleEl.textContent = dpTitles[id] || id;
+  
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   closeSidebar();
 }
 
-// =====================================================
-// SIDEBAR (mobile drawer)
-// =====================================================
-function toggleSidebar(){
+function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('sb-overlay').classList.toggle('show');
 }
-function closeSidebar(){
+
+function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sb-overlay').classList.remove('show');
 }
 
-// =====================================================
-// LANDING MOBILE MENU
-// =====================================================
-let landingMenuOpen=false;
-function toggleLandingMenu(){
-  landingMenuOpen=!landingMenuOpen;
-  const m=document.getElementById('landing-mobile-menu');
-  m.style.display=landingMenuOpen?'flex':'none';
-}
-function closeLandingMenu(){
-  landingMenuOpen=false;
-  document.getElementById('landing-mobile-menu').style.display='none';
+let landingMenuOpen = false;
+function toggleLandingMenu() {
+  landingMenuOpen = !landingMenuOpen;
+  const m = document.getElementById('landing-mobile-menu');
+  if(m) m.style.display = landingMenuOpen ? 'flex' : 'none';
 }
 
-// =====================================================
-// LIVE SESSION
-// =====================================================
-let sec=0;
-const TOTAL=1800,RATE=0.48,TOTAL_XRP=14.4;
-setInterval(()=>{
+function closeLandingMenu() {
+  landingMenuOpen = false;
+  const m = document.getElementById('landing-mobile-menu');
+  if(m) m.style.display = 'none';
+}
+
+// Logique du chronomètre de la session Live
+let sec = 0;
+const TOTAL = 1800, RATE = 0.48, TOTAL_XRP = 14.4;
+setInterval(() => {
   sec++;
-  const m=Math.floor(sec/60).toString().padStart(2,'0'),s=(sec%60).toString().padStart(2,'0');
-  const spent=(sec/60)*RATE,rem=Math.max(0,TOTAL_XRP-spent);
-  const p1=Math.min(100,(spent/TOTAL_XRP)*100),p2=Math.min(100,(sec/TOTAL)*100);
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e[typeof v==='string'&&v.includes('%')?'style':typeof v==='number'?'textContent':'textContent']=v;};
-  const el=id=>document.getElementById(id);
-  if(el('d-timer'))el('d-timer').textContent=`${m}:${s}`;
-  if(el('d-spent'))el('d-spent').textContent=spent.toFixed(3);
-  if(el('d-remain'))el('d-remain').textContent=rem.toFixed(3);
-  if(el('d-bar1'))el('d-bar1').style.width=p1+'%';
-  if(el('d-bar2'))el('d-bar2').style.width=p2+'%';
-  if(sec%30===0&&el('d-tx-log')){
-    const hash='0x'+Math.random().toString(16).slice(2,10).toUpperCase()+'...';
-    const row=document.createElement('div');
-    row.className='tx-row';
-    row.innerHTML=`<span class="tx-hash">${hash}</span><span class="tx-amt">−${spent.toFixed(3)} XRP</span><span class="tx-ok">✓</span>`;
+  const m = Math.floor(sec / 60).toString().padStart(2, '0'), s = (sec % 60).toString().padStart(2, '0');
+  const spent = (sec / 60) * RATE, rem = Math.max(0, TOTAL_XRP - spent);
+  const p1 = Math.min(100, (spent / TOTAL_XRP) * 100), p2 = Math.min(100, (sec / TOTAL) * 100);
+  
+  const el = id => document.getElementById(id);
+  if (el('d-timer')) el('d-timer').textContent = `${m}:${s}`;
+  if (el('d-spent')) el('d-spent').textContent = spent.toFixed(3);
+  if (el('d-remain')) el('d-remain').textContent = rem.toFixed(3);
+  if (el('d-bar1')) el('d-bar1').style.width = p1 + '%';
+  if (el('d-bar2')) el('d-bar2').style.width = p2 + '%';
+  
+  if (sec % 30 === 0 && el('d-tx-log')) {
+    const hash = '0x' + Math.random().toString(16).slice(2, 10).toUpperCase() + '...';
+    const row = document.createElement('div');
+    row.className = 'tx-row';
+    row.innerHTML = `<span class="tx-hash">${hash}</span><span class="tx-amt">−${spent.toFixed(3)} XRP</span><span class="tx-ok">✓</span>`;
     el('d-tx-log').appendChild(row);
   }
-},1000);
+}, 1000);
 
-// =====================================================
-// BOOKING MODAL
-// =====================================================
-let _rate=0.48,_type='telescope';
-function showBookModal(name,rate,type){
-  _rate=parseFloat(rate);_type=type;
-  document.getElementById('m-name').textContent=name;
-  document.getElementById('m-type').textContent=type==='quantum'?'Payment Channel · Pay per Shot · Trustless':'XRPL Escrow · Time-locked · Trustless';
+let _rate = 0.48, _type = 'telescope';
+function showBookModal(name, rate, type) {
+  _rate = parseFloat(rate); _type = type;
+  document.getElementById('m-name').textContent = name;
+  document.getElementById('m-type').textContent = type === 'quantum' ? 'Payment Channel · Pay per Shot' : 'XRPL Escrow · Time-locked';
   updateCost();
-  document.getElementById('modal').style.display='flex';
-}
-function closeModal(e){if(e.target===document.getElementById('modal'))document.getElementById('modal').style.display='none';}
-function updateCost(){const d=parseInt(document.getElementById('m-dur').value)||30;document.getElementById('m-cost').textContent=(d*_rate).toFixed(2)+' XRP';}
-function confirmBook(){document.getElementById('modal').style.display='none';toast('✓ Escrow submitted to XRPL Testnet');}
-
-// =====================================================
-// WALLET
-// =====================================================
-function copyAddr(){
-  navigator.clipboard.writeText('rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh')
-    .then(()=>toast('Address copied!'))
-    .catch(()=>toast('Copy failed'));
+  document.getElementById('modal').style.display = 'flex';
 }
 
-// =====================================================
-// TOAST
-// =====================================================
+function closeModal(e) { 
+  if (e.target === document.getElementById('modal')) document.getElementById('modal').style.display = 'none'; 
+}
+
+function updateCost() { 
+  const d = parseInt(document.getElementById('m-dur').value) || 30; 
+  document.getElementById('m-cost').textContent = (d * _rate).toFixed(2) + ' XRP'; 
+}
+
+function confirmBook() { 
+  document.getElementById('modal').style.display = 'none'; 
+  toast('✓ Escrow soumis sur XRPL Testnet'); 
+}
+
+function copyAddr() {
+  navigator.clipboard.writeText(DEMO_WALLET_ADDRESS)
+    .then(() => toast('Adresse copiée !'))
+    .catch(() => toast('Échec de la copie'));
+}
+
 let toastT;
-function toast(msg){
-  const el=document.getElementById('toast');
-  el.textContent=msg;el.classList.add('show');
+function toast(msg) {
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg; 
+  el.classList.add('show');
   clearTimeout(toastT);
-  toastT=setTimeout(()=>el.classList.remove('show'),3000);
+  toastT = setTimeout(() => el.classList.remove('show'), 3000);
 }
 </script>
 </body>
