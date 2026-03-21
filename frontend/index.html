@@ -439,27 +439,25 @@ td{font-size:11px;padding:11px 14px;color:var(--text);}
       <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
     </div>
 
-    <!-- LOGIN -->
     <div class="auth-panel active" id="panel-login">
       <button class="wallet-btn" onclick="walletLogin()"><div class="wallet-icon"></div>Connect XRPL Wallet</button>
       <p class="wallet-note">Crossmark · XUMM · Ledger</p>
       <div class="divider">or continue with email</div>
-      <div class="field"><label>Email</label><input type="email" placeholder="researcher@university.edu"></div>
-      <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
-      <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="loginDemo()">Sign In →</button>
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="researcher@university.edu"></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
+      <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="handleLogin()">Sign In →</button>
       <p class="auth-switch">No account? <a href="#" onclick="switchTab('register')">Create one free</a></p>
     </div>
 
-    <!-- REGISTER -->
     <div class="auth-panel" id="panel-register">
       <button class="wallet-btn" onclick="walletLogin()"><div class="wallet-icon"></div>Connect with XRPL Wallet</button>
       <p class="wallet-note">Instant — no email required</p>
       <div class="divider">or sign up with email</div>
-      <div class="field"><label>Full Name</label><input type="text" placeholder="Dr. Ada Lovelace"></div>
-      <div class="field"><label>Email</label><input type="email" placeholder="researcher@university.edu"></div>
-      <div class="field"><label>Password</label><input type="password" placeholder="Min. 8 characters"></div>
-      <div class="field"><label>Role</label><select><option>Researcher</option><option>Student</option><option>Instrument Provider</option><option>Institution</option></select></div>
-      <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="loginDemo()">Create Account →</button>
+      <div class="field"><label>Full Name</label><input type="text" id="reg-name" placeholder="Dr. Ada Lovelace"></div>
+      <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="researcher@university.edu"></div>
+      <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="Min. 8 characters"></div>
+      <div class="field"><label>Role</label><select id="reg-role"><option value="RESEARCHER">Researcher</option><option value="PROVIDER">Instrument Provider</option></select></div>
+      <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="handleRegister()">Create Account →</button>
       <p class="auth-switch">Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a></p>
     </div>
   </div>
@@ -679,21 +677,86 @@ window.addEventListener('resize',checkMobileBtn);
 checkMobileBtn();
 
 // =====================================================
-// AUTH
+// CONFIGURATION API
 // =====================================================
-function showAuth(tab){showPage('auth');switchTab(tab||'login');}
-function switchTab(t){
-  ['login','register'].forEach(id=>{
-    document.getElementById('tab-'+id).classList.toggle('active',id===t);
-    document.getElementById('panel-'+id).classList.toggle('active',id===t);
-  });
+const API_URL = "https://bsa-website.onrender.com";
+
+// --- INSCRIPTION ---
+async function handleRegister() {
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+  const role = document.getElementById('reg-role').value;
+
+  if(!name || !email || !password) return toast("Veuillez remplir tous les champs !");
+  
+  toast("Création du compte...");
+  try {
+    const res = await fetch(`${API_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role })
+    });
+    
+    const data = await res.json();
+
+    if(res.ok) {
+      toast("Compte créé ! Connectez-vous.");
+      switchTab('login');
+      document.getElementById('login-email').value = email;
+    } else {
+      toast("Erreur: " + (data.error || "Échec de l'inscription"));
+    }
+  } catch (err) {
+    toast("Le serveur Render se réveille... réessayez dans 30s.");
+  }
 }
-function loginDemo(){showPage('dashboard');showDP('overview');toast('Welcome back! Connected to XRPL Testnet ✓');}
-function walletLogin(){
-  toast('Connecting wallet...');
-  setTimeout(()=>{showPage('dashboard');showDP('overview');toast('Wallet connected: rHb9...mL6 ✓');},1200);
+
+// --- CONNEXION ---
+async function handleLogin() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  if(!email || !password) return toast("Email et mot de passe requis");
+
+  toast("Vérification...");
+  try {
+    const res = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if(res.ok) {
+      // On stocke le token de session pour rester connecté
+      localStorage.setItem('quantum_token', data.token);
+      toast("Connexion réussie ✓");
+      showPage('dashboard');
+      showDP('overview');
+    } else {
+      toast("Identifiants incorrects");
+    }
+  } catch (err) {
+    toast("Erreur de connexion au serveur Render.");
+  }
 }
-function logout(){showPage('landing');}
+
+function logout() {
+  localStorage.removeItem('quantum_token');
+  showPage('landing');
+  toast("Déconnecté.");
+}
+
+function walletLogin() {
+  toast('Connecting XRPL wallet...');
+  setTimeout(() => {
+    showPage('dashboard');
+    showDP('overview');
+    toast('Connected: rHb9...mL6 ✓');
+  }, 1000);
+}
 
 // =====================================================
 // DASHBOARD PAGES
