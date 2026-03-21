@@ -8,14 +8,45 @@ datasource db {
 }
 
 // =============================================
-// ENUMS (Requis pour la compilation)
+// ENUMS
 // =============================================
 
-enum Role { RESEARCHER; STUDENT; PROVIDER; INSTITUTION; ADMIN }
-enum InstrumentType { TELESCOPE; QUANTUM; SPECTROGRAPH; RADIO; OTHER }
-enum InstrumentStatus { ONLINE; BUSY; OFFLINE; MAINTENANCE }
-enum SessionStatus { PENDING; ACTIVE; COMPLETED; CANCELLED; DISPUTED; EXPIRED }
-enum EscrowType { ESCROW; PAYMENT_CHANNEL }
+enum Role {
+  RESEARCHER
+  STUDENT
+  PROVIDER
+  INSTITUTION
+  ADMIN
+}
+
+enum InstrumentType {
+  TELESCOPE
+  QUANTUM
+  SPECTROGRAPH
+  RADIO
+  OTHER
+}
+
+enum InstrumentStatus {
+  ONLINE
+  BUSY
+  OFFLINE
+  MAINTENANCE
+}
+
+enum SessionStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  DISPUTED
+  EXPIRED
+}
+
+enum EscrowType {
+  ESCROW
+  PAYMENT_CHANNEL
+}
 
 // =============================================
 // MODELS
@@ -23,10 +54,10 @@ enum EscrowType { ESCROW; PAYMENT_CHANNEL }
 
 model User {
   id           String    @id @default(uuid())
-  xrplAddress  String    @unique // [cite: 2]
-  email        String?   @unique [cite: 3]
+  xrplAddress  String    @unique
+  email        String?   @unique
   name         String?
-  role         Role      @default(RESEARCHER) [cite: 4]
+  role         Role      @default(RESEARCHER)
   institution  String?
   avatarUrl    String?
   createdAt    DateTime  @default(now())
@@ -41,42 +72,48 @@ model Instrument {
   id           String           @id @default(uuid())
   name         String
   type         InstrumentType
-  status       InstrumentStatus @default(ONLINE) [cite: 5]
+  status       InstrumentStatus @default(ONLINE)
   location     String
   country      String
-  latitude     Float? [cite: 6]
-  longitude    Float? [cite: 7]
-  priceXRP     Float [cite: 7]
+  latitude     Float?
+  longitude    Float?
+  priceXRP     Float
   rateUnit     String
-  minSession   Int @default(0) [cite: 8]
+  minSession   Int              @default(0)
   specs        Json?
   imageUrl     String?
   description  String?
+
   providerId   String?
-  provider     User?            @relation(fields: [providerId], references: [id]) [cite: 10]
+  provider     User?            @relation(fields: [providerId], references: [id])
+
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+
   sessions     Session[]
-  queue        QueueEntry[] [cite: 10]
+  queue        QueueEntry[]
 }
 
 model Session {
   id              String        @id @default(uuid())
   userId          String
   instrumentId    String
-  escrowType      EscrowType    @default(ESCROW) [cite: 11]
-  xrplTxHash      String? 
-  channelId       String? 
-  status          SessionStatus @default(PENDING) [cite: 15]
-  durationSec     Int [cite: 15]
+
+  escrowType      EscrowType    @default(ESCROW)
+  xrplTxHash      String?
+  channelId       String?
+  status          SessionStatus @default(PENDING)
+  durationSec     Int
   actualSec       Float?
-  actualShots     Int? 
-  xrpLocked       Float @default(0) 
+  actualShots     Int?
+  xrpLocked       Float         @default(0)
   xrpSpent        Float?
+
   startedAt       DateTime?
   endedAt         DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
   user            User          @relation(fields: [userId], references: [id])
   instrument      Instrument    @relation(fields: [instrumentId], references: [id])
   claims          PaymentClaim[]
@@ -85,8 +122,8 @@ model Session {
 model PaymentClaim {
   id            String   @id @default(uuid())
   sessionId     String
-  shotNumber    Int [cite: 24]
-  cumulativeXRP Float [cite: 24]
+  shotNumber    Int
+  cumulativeXRP Float
   session       Session  @relation(fields: [sessionId], references: [id])
 }
 
@@ -94,18 +131,18 @@ model QueueEntry {
   id           String     @id @default(uuid())
   instrumentId String
   userId       String
-  expiresAt    DateTime [cite: 25]
+  expiresAt    DateTime
   instrument   Instrument @relation(fields: [instrumentId], references: [id])
 }
 
 model Notification {
   id        String   @id @default(uuid())
   userId    String
-  type      String [cite: 26]
+  type      String
   title     String
   body      String
   read      Boolean  @default(false)
-  metadata  Json? [cite: 27]
+  metadata  Json?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
