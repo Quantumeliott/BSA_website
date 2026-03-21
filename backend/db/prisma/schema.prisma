@@ -1,0 +1,197 @@
+// =============================================
+// QuantumGrid — Prisma Schema
+// DB: PostgreSQL (or Supabase)
+// Run: npx prisma migrate dev --name init
+// =============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// ENUMS
+// =============================================
+
+enum Role {
+  RESEARCHER
+  STUDENT
+  PROVIDER
+  INSTITUTION
+  ADMIN
+}
+
+enum InstrumentType {
+  TELESCOPE
+  QUANTUM
+  SPECTROGRAPH
+  RADIO
+  OTHER
+}
+
+enum InstrumentStatus {
+  ONLINE
+  BUSY
+  OFFLINE
+  MAINTENANCE
+}
+
+enum SessionStatus {
+  PENDING      // escrow created, waiting for provider
+  ACTIVE       // session running
+  COMPLETED    // delivered, escrow released
+  CANCELLED    // cancelled before start
+  DISPUTED     // delivery contested
+  EXPIRED      // escrow expired without delivery
+}
+
+enum EscrowType {
+  ESCROW          // telescope: time-locked EscrowCreate
+  PAYMENT_CHANNEL // quantum: per-shot PaymentChannel
+}
+
+// =============================================
+// MODELS
+// =============================================
+
+model User {
+  id           String    @id @default(uuid())
+  xrplAddress  String    @unique
+  email        String?   @unique
+  name         String?
+  role         Role      @default(RESEARCHER)
+  institution  String?
+  avatarUrl    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions     Session[]
+  instruments  Instrument[] // if provider
+  notifications Notification[]
+
+  @@index([xrplAddress])
+  @@index([email])
+}
+
+model Instrument {
+  id           String           @id @default(uuid())
+  name         String
+  type         InstrumentType
+  status       InstrumentStatus @default(ONLINE)
+  location     String
+  country      String
+  latitude     Float?
+  longitude    Float?
+  priceXRP     Float            // rate per unit
+  rateUnit     String           // "per_min" | "per_shot" | "per_hour"
+  minSession   Int              // minimum duration in seconds or shots
+  specs        Json             // flexible: aperture, qubits, resolution, etc.
+  imageUrl     String?
+  description  String?
+
+  providerId   String?
+  provider     User?            @relation(fields: [providerId], references: [id])
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  sessions     Session[]
+  queue        QueueEntry[]
+
+  @@index([type])
+  @@index([status])
+  @@index([providerId])
+}
+
+model Session {
+  id              String        @id @default(uuid())
+  userId          String
+  instrumentId    String
+
+  // XRPL on-chain references
+  escrowType      EscrowType
+  xrplTxHash      String?       // EscrowCreate or PaymentChannelCreate tx hash
+  channelId       String?       // Payment Channel ID (quantum only)
+  escrowSequence  Int?          // EscrowCreate sequence (telescope only)
+  conditionHex    String?       // BLAKE2b condition (telescope)
+
+  // Session state
+  status          SessionStatus @default(PENDING)
+  durationSec     Int           // requested duration or max shots
+  actualSec       Float?        // actual seconds used
+  actualShots     Int?          // actual shots executed (quantum)
+  xrpLocked       Float         // amount locked in escrow
+  xrpSpent        Float?        // actual amount consumed
+  xrpRefunded     Float?        // surplus returned
+
+  // Oracle data
+  oracleSessionId String?       // oracle internal session id
+  receipt         Json?         // signed oracle receipt
+  fulfillmentHex  String?       // BLAKE2b preimage (revealed at end)
+
+  // Timestamps
+  startedAt       DateTime?
+  endedAt         DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+  instrument      Instrument    @relation(fields: [instrumentId], references: [id])
+  claims          PaymentClaim[]
+
+  @@index([userId])
+  @@index([instrumentId])
+  @@index([status])
+  @@index([xrplTxHash])
+}
+
+// Off-chain log of each Payment Channel claim (quantum per-shot)
+model PaymentClaim {
+  id            String   @id @default(uuid())
+  sessionId     String
+  shotNumber    Int
+  cumulativeXRP Float
+  signedClaim   String   // hex signature from user wallet
+  submittedAt   DateTime @default(now())
+
+  session       Session  @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+}
+
+// Queue for busy instruments
+model QueueEntry {
+  id           String     @id @default(uuid())
+  instrumentId String
+  userId       String
+  requestedSec Int
+  budgetXRP    Float
+  position     Int
+  createdAt    DateTime   @default(now())
+  expiresAt    DateTime
+
+  instrument   Instrument @relation(fields: [instrumentId], references: [id])
+
+  @@index([instrumentId])
+  @@index([userId])
+}
+
+// Push notifications (session updates, escrow events)
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // "session_start" | "session_end" | "escrow_released" | "low_balance"
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  metadata  Json?    // extra context (txHash, sessionId, etc.)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, read])
+}

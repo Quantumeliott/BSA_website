@@ -1,0 +1,135 @@
+/* =============================================
+   QUANTUMGRID — Design Tokens & Base Styles
+   ============================================= */
+
+:root {
+  /* Colors */
+  --bg:        #04040a;
+  --bg-card:   #080810;
+  --bg-card2:  #0c0c18;
+  --cyan:      #00e5ff;
+  --orange:    #ff6b35;
+  --green:     #39ff14;
+  --text:      #d8d8f0;
+  --text-dim:  #6868a0;
+  --border:    rgba(0, 229, 255, 0.12);
+  --border-hot:rgba(0, 229, 255, 0.35);
+
+  /* Typography */
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+  --font-serif:   'Instrument Serif', serif;
+
+  /* Spacing */
+  --page-pad: 48px;
+}
+
+/* ---- Reset ---- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+
+/* ---- Global grid background ---- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---- Animations ---- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translateY(-50%) scale(1);    opacity: 0.7; }
+  50%       { transform: translateY(-50%) scale(1.04); opacity: 1;   }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Shared section header ---- */
+.section-header {
+  padding: 100px var(--page-pad) 52px;
+  position: relative;
+  z-index: 1;
+}
+
+.section-tag {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 1;
+}
+
+/* ---- Shared buttons ---- */
+.btn-primary {
+  background: var(--cyan);
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 16px 36px;
+  border: none;
+  cursor: crosshair;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+  background: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,229,255,0.3);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 16px 36px;
+  border: 1px solid var(--border);
+  cursor: crosshair;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+  border-color: var(--border-hot);
+  color: var(--cyan);
+}
