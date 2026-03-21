@@ -50,12 +50,9 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'Internal server error' })
 })
 
-// ---- Start ----
-app.listen(PORT, async () => {
-  await prisma.$connect()
-  console.log(`[API] Running on :${PORT}`)
-  console.log(`[API] DB connected`)
-})
+app.listen(PORT, () => {
+  console.log(`[API] Running on :${PORT}`);
+});
 
 // ---- Graceful shutdown ----
 process.on('SIGINT', async () => {
