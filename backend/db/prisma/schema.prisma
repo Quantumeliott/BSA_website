@@ -8,45 +8,14 @@ datasource db {
 }
 
 // =============================================
-// ENUMS
+// ENUMS (Requis pour la compilation)
 // =============================================
 
-enum Role {
-  RESEARCHER
-  STUDENT
-  PROVIDER
-  INSTITUTION
-  ADMIN
-}
-
-enum InstrumentType {
-  TELESCOPE
-  QUANTUM
-  SPECTROGRAPH
-  RADIO
-  OTHER
-}
-
-enum InstrumentStatus {
-  ONLINE
-  BUSY
-  OFFLINE
-  MAINTENANCE
-}
-
-enum SessionStatus {
-  PENDING
-  ACTIVE
-  COMPLETED
-  CANCELLED
-  DISPUTED
-  EXPIRED
-}
-
-enum EscrowType {
-  ESCROW
-  PAYMENT_CHANNEL
-}
+enum Role { RESEARCHER; STUDENT; PROVIDER; INSTITUTION; ADMIN }
+enum InstrumentType { TELESCOPE; QUANTUM; SPECTROGRAPH; RADIO; OTHER }
+enum InstrumentStatus { ONLINE; BUSY; OFFLINE; MAINTENANCE }
+enum SessionStatus { PENDING; ACTIVE; COMPLETED; CANCELLED; DISPUTED; EXPIRED }
+enum EscrowType { ESCROW; PAYMENT_CHANNEL }
 
 // =============================================
 // MODELS
@@ -54,10 +23,10 @@ enum EscrowType {
 
 model User {
   id           String    @id @default(uuid())
-  xrplAddress  String    @unique
-  email        String?   @unique
+  xrplAddress  String    @unique // [cite: 2]
+  email        String?   @unique [cite: 3]
   name         String?
-  role         Role      @default(RESEARCHER)
+  role         Role      @default(RESEARCHER) [cite: 4]
   institution  String?
   avatarUrl    String?
   createdAt    DateTime  @default(now())
@@ -72,44 +41,42 @@ model Instrument {
   id           String           @id @default(uuid())
   name         String
   type         InstrumentType
-  status       InstrumentStatus @default(ONLINE)
+  status       InstrumentStatus @default(ONLINE) [cite: 5]
   location     String
   country      String
-  latitude     Float?
-  longitude    Float?
-  priceXRP     Float
+  latitude     Float? [cite: 6]
+  longitude    Float? [cite: 7]
+  priceXRP     Float [cite: 7]
   rateUnit     String
-  minSession   Int              @default(0)
+  minSession   Int @default(0) [cite: 8]
   specs        Json?
   imageUrl     String?
   description  String?
-
   providerId   String?
-  provider     User?            @relation(fields: [providerId], references: [id])
-
+  provider     User?            @relation(fields: [providerId], references: [id]) [cite: 10]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
-
   sessions     Session[]
+  queue        QueueEntry[] [cite: 10]
 }
 
 model Session {
   id              String        @id @default(uuid())
   userId          String
   instrumentId    String
-
-  escrowType      EscrowType    @default(ESCROW)
-  xrplTxHash      String?
-  status          SessionStatus @default(PENDING)
-  durationSec     Int
+  escrowType      EscrowType    @default(ESCROW) [cite: 11]
+  xrplTxHash      String? 
+  channelId       String? 
+  status          SessionStatus @default(PENDING) [cite: 15]
+  durationSec     Int [cite: 15]
   actualSec       Float?
+  actualShots     Int? 
+  xrpLocked       Float @default(0) 
   xrpSpent        Float?
-  
   startedAt       DateTime?
   endedAt         DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-
   user            User          @relation(fields: [userId], references: [id])
   instrument      Instrument    @relation(fields: [instrumentId], references: [id])
   claims          PaymentClaim[]
@@ -118,18 +85,27 @@ model Session {
 model PaymentClaim {
   id            String   @id @default(uuid())
   sessionId     String
-  shotNumber    Int      @default(0)
+  shotNumber    Int [cite: 24]
+  cumulativeXRP Float [cite: 24]
   session       Session  @relation(fields: [sessionId], references: [id])
+}
+
+model QueueEntry {
+  id           String     @id @default(uuid())
+  instrumentId String
+  userId       String
+  expiresAt    DateTime [cite: 25]
+  instrument   Instrument @relation(fields: [instrumentId], references: [id])
 }
 
 model Notification {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  type      String
+  type      String [cite: 26]
   title     String
   body      String
   read      Boolean  @default(false)
-  metadata  Json?
+  metadata  Json? [cite: 27]
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
