@@ -704,9 +704,9 @@ async function handleRegister() {
   const email = document.getElementById('reg-email').value;
   const password = document.getElementById('reg-password').value;
 
-  if (!name || !email || !password) return toast("Veuillez remplir tous les champs !");
+  if (!name || !email || !password) return toast("Champs obligatoires manquants !");
   
-  toast("Création du compte...");
+  toast("Création de votre profil...");
   
   try {
     const res = await fetch(`${API_URL}/users`, {
@@ -714,23 +714,21 @@ async function handleRegister() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         email: email, 
-        password: password, // <--- C'était lui le grand absent qui causait l'erreur 400 !
-        xrplAddress: DEMO_WALLET_ADDRESS // On le garde optionnellement pour le Web3
+        password: password,
+        name: name // On envoie le nom pour personnaliser le dashboard
       })
     });
     
+    const data = await res.json();
+
     if (res.ok) {
-      toast("Compte créé avec succès ! Connectez-vous.");
+      toast("Bienvenue ! Connectez-vous maintenant.");
       switchTab('login');
-      document.getElementById('login-email').value = email;
-      document.getElementById('login-password').value = '';
     } else {
-      const data = await res.json();
-      toast("Erreur: " + (data.error || "Échec de l'inscription"));
+      toast("Erreur: " + (data.error || "Inscription impossible"));
     }
   } catch (err) {
-    console.error(err);
-    toast("Erreur de connexion au serveur.");
+    toast("Le serveur ne répond pas.");
   }
 }
 
