@@ -20,27 +20,36 @@ export async function getUserByAddress(req: Request, res: Response) {
 }
 
 export async function upsertUser(req: Request, res: Response) {
-  const { email, password, name } = req.body
-  if (!email || !password) return res.status(400).json({ error: 'Email/Pass requis' })
+  const { email, password, name } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email et mot de passe requis" });
+  }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password, 10);
     
     const user = await prisma.user.upsert({
-      where: { email },
-      update: { password: hashedPassword, name: name || undefined },
+      where: { email: email },
+      update: { 
+        password: hashedPassword, 
+        name: name || undefined 
+      },
       create: {
-        email,
+        email: email,
         password: hashedPassword,
         name: name || null,
-        xrplAddress: null // <--- Crucial : on met null pour éviter le conflit d'unique
+        xrplAddress: null // <--- TRÈS IMPORTANT : On laisse vide pour la création
       },
-    })
-    res.status(201).json({ id: user.id, email: user.email })
+    });
+
+    res.status(201).json({ id: user.id, email: user.email });
   } catch (err: any) {
-    // Si l'email est déjà pris, Prisma renvoie P2002
-    if (err.code === 'P2002') return res.status(409).json({ error: 'Cet email est déjà utilisé' })
-    res.status(500).json({ error: 'Erreur interne' })
+    console.error("ERREUR DÉTAILLÉE :", err);
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: "Cet email est déjà utilisé par un autre compte." });
+    }
+    res.status(500).json({ error: "Erreur serveur", details: err.message });
   }
 }
 
