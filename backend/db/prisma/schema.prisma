@@ -59,7 +59,9 @@ model User {
   name         String?
   role         Role      @default(RESEARCHER)
   institution  String?
+  avatarUrl    String?
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   sessions     Session[]
   instruments  Instrument[]
@@ -72,15 +74,22 @@ model Instrument {
   type         InstrumentType
   status       InstrumentStatus @default(ONLINE)
   location     String
-  country      String           // Requis par ton code
-  priceXRP     Float            // Ton code cherche priceXRP
-  rateUnit     String           
-  specs        Json?            
-  
+  country      String
+  latitude     Float?
+  longitude    Float?
+  priceXRP     Float
+  rateUnit     String
+  minSession   Int              @default(0)
+  specs        Json?
+  imageUrl     String?
+  description  String?
+
   providerId   String?
   provider     User?            @relation(fields: [providerId], references: [id])
 
   createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
   sessions     Session[]
 }
 
@@ -88,15 +97,18 @@ model Session {
   id              String        @id @default(uuid())
   userId          String
   instrumentId    String
-  
-  escrowType      EscrowType    @default(ESCROW) // Requis par ton code
-  status          SessionStatus @default(PENDING)
-  durationSec     Int           // Ton code cherche durationSec, pas duration
-  actualSec       Float?        // Requis par ton code
-  xrpSpent        Float?        // Requis par ton code
-  totalCost       Float?
 
+  escrowType      EscrowType    @default(ESCROW)
+  xrplTxHash      String?
+  status          SessionStatus @default(PENDING)
+  durationSec     Int
+  actualSec       Float?
+  xrpSpent        Float?
+  
+  startedAt       DateTime?
+  endedAt         DateTime?
   createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   user            User          @relation(fields: [userId], references: [id])
   instrument      Instrument    @relation(fields: [instrumentId], references: [id])
@@ -106,6 +118,7 @@ model Session {
 model PaymentClaim {
   id            String   @id @default(uuid())
   sessionId     String
+  shotNumber    Int      @default(0)
   session       Session  @relation(fields: [sessionId], references: [id])
 }
 
@@ -117,5 +130,6 @@ model Notification {
   title     String
   body      String
   read      Boolean  @default(false)
+  metadata  Json?
   createdAt DateTime @default(now())
 }
