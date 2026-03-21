@@ -389,14 +389,7 @@ td{font-size:11px;padding:11px 14px;color:var(--text);}
   <section class="section" id="sec-market">
     <p class="s-tag">// Available Now</p>
     <h2 class="s-title">Live Instruments</h2>
-    <div class="instruments">
-      <div class="icard"><div class="icard-badge"><span class="dot dot-green"></span>Online — Telescope</div><div class="icard-name">Hα Solar Array — T24</div><div class="icard-loc">📍 Atacama Desert, Chile · 2400m</div><div class="icard-specs"><div class="spec"><span class="spec-k">Aperture</span><span class="spec-v">600mm f/8</span></div><div class="spec"><span class="spec-k">Camera</span><span class="spec-v">16MP Cooled CCD</span></div><div class="spec"><span class="spec-k">Min. Session</span><span class="spec-v">15 min</span></div></div><div class="icard-price"><span class="price-n">0.48</span><span class="price-u">XRP / min</span></div><button class="icard-btn" onclick="showAuth('register')">Reserve Session →</button></div>
-      <div class="icard"><div class="icard-badge"><span class="dot dot-green"></span>Online — Quantum</div><div class="icard-name">Cat Qubit — Lab Node 3</div><div class="icard-loc">📍 ETH Zurich, Switzerland</div><div class="icard-specs"><div class="spec"><span class="spec-k">Qubits</span><span class="spec-v">12 logical</span></div><div class="spec"><span class="spec-k">Gate Fidelity</span><span class="spec-v">99.1%</span></div><div class="spec"><span class="spec-k">Queue</span><span class="spec-v">~4 min</span></div></div><div class="icard-price"><span class="price-n">0.12</span><span class="price-u">XRP / shot</span></div><button class="icard-btn" onclick="showAuth('register')">Open Channel →</button></div>
-      <div class="icard"><div class="icard-badge"><span class="dot dot-orange"></span>Busy — Telescope</div><div class="icard-name">IR Deep Field — C14</div><div class="icard-loc">📍 La Palma, Canary Islands</div><div class="icard-specs"><div class="spec"><span class="spec-k">Aperture</span><span class="spec-v">355mm f/11</span></div><div class="spec"><span class="spec-k">Camera</span><span class="spec-v">Full-frame IR</span></div><div class="spec"><span class="spec-k">Queue</span><span class="spec-v">~22 min</span></div></div><div class="icard-price"><span class="price-n">0.82</span><span class="price-u">XRP / min</span></div><button class="icard-btn off">In Use — Join Queue</button></div>
-      <div class="icard"><div class="icard-badge"><span class="dot dot-green"></span>Online — Spectrograph</div><div class="icard-name">LIBS Analyzer — Spectro-X2</div><div class="icard-loc">📍 University of Tokyo, Japan</div><div class="icard-specs"><div class="spec"><span class="spec-k">Resolution</span><span class="spec-v">0.03nm</span></div><div class="spec"><span class="spec-k">Range</span><span class="spec-v">200–900nm</span></div><div class="spec"><span class="spec-k">Min. Session</span><span class="spec-v">10 min</span></div></div><div class="icard-price"><span class="price-n">0.24</span><span class="price-u">XRP / min</span></div><button class="icard-btn" onclick="showAuth('register')">Reserve Session →</button></div>
-      <div class="icard"><div class="icard-badge"><span class="dot dot-green"></span>Online — Quantum</div><div class="icard-name">Photonic QPU — Xanadu X8</div><div class="icard-loc">📍 Paris Quantum Campus, France</div><div class="icard-specs"><div class="spec"><span class="spec-k">Modes</span><span class="spec-v">8 photonic</span></div><div class="spec"><span class="spec-k">Technology</span><span class="spec-v">GBS</span></div><div class="spec"><span class="spec-k">Queue</span><span class="spec-v">~1 min</span></div></div><div class="icard-price"><span class="price-n">0.08</span><span class="price-u">XRP / shot</span></div><button class="icard-btn" onclick="showAuth('register')">Open Channel →</button></div>
-      <div class="icard"><div class="icard-badge"><span class="dot dot-dim"></span>Offline — Radio</div><div class="icard-name">Radio Array — 21cm Band</div><div class="icard-loc">📍 Westerbork, Netherlands</div><div class="icard-specs"><div class="spec"><span class="spec-k">Frequency</span><span class="spec-v">1.4 GHz</span></div><div class="spec"><span class="spec-k">Dishes</span><span class="spec-v">14 × 25m</span></div><div class="spec"><span class="spec-k">Back Online</span><span class="spec-v">~6h</span></div></div><div class="icard-price"><span class="price-n">2.40</span><span class="price-u">XRP / hour</span></div><button class="icard-btn off">Currently Offline</button></div>
-    </div>
+    <div class="instruments" id="landing-list"></div>
   </section>
 
   <section class="section" id="sec-how" style="padding-top:0">
@@ -561,14 +554,7 @@ td{font-size:11px;padding:11px 14px;color:var(--text);}
         <button class="btn btn-ghost btn-sm">Spectrograph</button>
         <button class="btn btn-ghost btn-sm">Radio</button>
       </div>
-      <div class="browse-grid">
-        <div class="icard"><div class="icard-badge"><span class="dot dot-green"></span>Online — Telescope</div><div class="icard-name">Hα Solar Array — T24</div><div class="icard-loc">📍 Atacama, Chile</div><div class="icard-specs"><div class="spec"><span class="spec-k">Aperture</span><span class="spec-v">600mm f/8</span></div><div class="spec"><span class="spec-k">Min. Session</span><span class="spec-v">15 min</span></div></div><div class="icard-price"><span class="price-n">0.48</span><span class="price-u">XRP / min</span></div><button class="icard-btn" onclick="showBookModal('Hα Solar Array T24','0.48','telescope')">Reserve →</button></div>
-        <div class="icard"><div class="icard-badge"><span class="dot dot-green"></span>Online — Quantum</div><div class="icard-name">Cat Qubit — Lab Node 3</div><div class="icard-loc">📍 ETH Zurich, CH</div><div class="icard-specs"><div class="spec"><span class="spec-k">Qubits</span><span class="spec-v">12 logical</span></div><div class="spec"><span class="spec-k">Fidelity</span><span class="spec-v">99.1%</span></div></div><div class="icard-price"><span class="price-n">0.12</span><span class="price-u">XRP / shot</span></div><button class="icard-btn" onclick="showBookModal('Cat Qubit Lab Node 3','0.12','quantum')">Open Channel →</button></div>
-        <div class="icard"><div class="icard-badge"><span class="dot dot-green"></span>Online — Quantum</div><div class="icard-name">Photonic QPU — X8</div><div class="icard-loc">📍 Paris, France</div><div class="icard-specs"><div class="spec"><span class="spec-k">Modes</span><span class="spec-v">8 photonic</span></div><div class="spec"><span class="spec-k">Queue</span><span class="spec-v">~1 min</span></div></div><div class="icard-price"><span class="price-n">0.08</span><span class="price-u">XRP / shot</span></div><button class="icard-btn" onclick="showBookModal('Xanadu X8','0.08','quantum')">Open Channel →</button></div>
-        <div class="icard"><div class="icard-badge"><span class="dot dot-orange"></span>Busy — Telescope</div><div class="icard-name">IR Deep Field — C14</div><div class="icard-loc">📍 La Palma, Spain</div><div class="icard-specs"><div class="spec"><span class="spec-k">Aperture</span><span class="spec-v">355mm f/11</span></div><div class="spec"><span class="spec-k">Queue</span><span class="spec-v">~22 min</span></div></div><div class="icard-price"><span class="price-n">0.82</span><span class="price-u">XRP / min</span></div><button class="icard-btn off">In Use</button></div>
-        <div class="icard"><div class="icard-badge"><span class="dot dot-green"></span>Online — Spectrograph</div><div class="icard-name">LIBS Spectro-X2</div><div class="icard-loc">📍 Tokyo, Japan</div><div class="icard-specs"><div class="spec"><span class="spec-k">Resolution</span><span class="spec-v">0.03nm</span></div><div class="spec"><span class="spec-k">Min. Session</span><span class="spec-v">10 min</span></div></div><div class="icard-price"><span class="price-n">0.24</span><span class="price-u">XRP / min</span></div><button class="icard-btn" onclick="showBookModal('LIBS Spectro-X2','0.24','telescope')">Reserve →</button></div>
-        <div class="icard"><div class="icard-badge"><span class="dot dot-dim"></span>Offline — Radio</div><div class="icard-name">Radio Array — 21cm</div><div class="icard-loc">📍 Westerbork, NL</div><div class="icard-specs"><div class="spec"><span class="spec-k">Frequency</span><span class="spec-v">1.4 GHz</span></div><div class="spec"><span class="spec-k">Back online</span><span class="spec-v">~6h</span></div></div><div class="icard-price"><span class="price-n">2.40</span><span class="price-u">XRP / hour</span></div><button class="icard-btn off">Offline</button></div>
-      </div>
+      <div class="browse-grid" id="dash-list"></div>
     </div>
 
     <!-- BOOKINGS -->
@@ -884,6 +870,69 @@ function toast(msg) {
   clearTimeout(toastT);
   toastT = setTimeout(() => el.classList.remove('show'), 3000);
 }
+
+async function loadInstruments() {
+  try {
+    const response = await fetch(`${API_URL}/instruments`);
+    const instruments = await response.json();
+
+    if (!response.ok) throw new Error("Erreur lors du fetch");
+
+    // On affiche dans les deux sections
+    renderToContainer(instruments, 'landing-list', false);
+    renderToContainer(instruments, 'dash-list', true);
+
+  } catch (error) {
+    console.error("Erreur d'affichage :", error);
+    // Optionnel : afficher un message d'erreur dans l'UI
+  }
+}
+
+function renderToContainer(data, containerId, isDashboard) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = data.map(inst => {
+    // Gestion de l'agenda (on transforme le JSON en petits badges)
+    let agendaHTML = '';
+    try {
+      const slots = typeof inst.agenda === 'string' ? JSON.parse(inst.agenda) : inst.agenda;
+      if (Array.isArray(slots)) {
+        agendaHTML = `<div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:8px;">` + 
+          slots.map(s => `<span style="font-size:9px; background:rgba(0,229,255,0.1); color:var(--cyan); padding:2px 5px; border-radius:3px; border:1px solid var(--border);">${s}</span>`).join('') + 
+          `</div>`;
+      }
+    } catch(e) { /* Pas d'agenda ou format simple */ }
+
+    return `
+      <div class="icard">
+        ${inst.image ? `<img src="${inst.image}" style="width:100%; height:120px; object-fit:cover; border-radius:6px; margin-bottom:12px; border:1px solid var(--border);">` : ''}
+        
+        <div class="icard-badge">
+          <span class="dot dot-green"></span>
+          ONLINE — ${inst.type}
+        </div>
+        
+        <div class="icard-name">${inst.name}</div>
+        <div class="icard-loc">📍 ${inst.location}, ${inst.country}</div>
+        
+        ${agendaHTML}
+
+        <div class="icard-price" style="margin-top:15px;">
+          <span class="price-n">${inst.priceXRP}</span>
+          <span class="price-u">XRP / session</span>
+        </div>
+
+        <button class="icard-btn" onclick="${isDashboard ? `showBookModal('${inst.name}', ${inst.priceXRP}, '${inst.type.toLowerCase()}')` : `showAuth('register')`}">
+          ${isDashboard ? 'Reserve →' : 'Get Started →'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+// On lance le chargement dès que la page est prête
+window.addEventListener('DOMContentLoaded', loadInstruments);
 </script>
 </body>
 </html>

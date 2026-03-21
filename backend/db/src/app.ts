@@ -59,3 +59,8 @@ process.on('SIGINT', async () => {
   await prisma.$disconnect()
   process.exit(0)
 })
+
+app.get('/api/instruments', async (req, res) => {
+  const instruments = await prisma.instrument.findMany();
+  res.json(instruments);
+});
