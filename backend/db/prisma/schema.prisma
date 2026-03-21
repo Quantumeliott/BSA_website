@@ -8,12 +8,15 @@ datasource db {
 }
 
 // =============================================
-// ENUMS (Les listes de choix)
+// ENUMS
 // =============================================
 
 enum Role {
   RESEARCHER
+  STUDENT
   PROVIDER
+  INSTITUTION
+  ADMIN
 }
 
 enum InstrumentType {
@@ -21,12 +24,14 @@ enum InstrumentType {
   QUANTUM
   SPECTROGRAPH
   RADIO
+  OTHER
 }
 
 enum InstrumentStatus {
   ONLINE
   BUSY
   OFFLINE
+  MAINTENANCE
 }
 
 enum SessionStatus {
@@ -34,53 +39,83 @@ enum SessionStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+  DISPUTED
+  EXPIRED
+}
+
+enum EscrowType {
+  ESCROW
+  PAYMENT_CHANNEL
 }
 
 // =============================================
-// MODELS (Les tables)
+// MODELS
 // =============================================
 
 model User {
-  id          String       @id @default(uuid())
-  email       String?      @unique
-  name        String?
-  role        Role         @default(RESEARCHER)
-  createdAt   DateTime     @default(now())
+  id           String    @id @default(uuid())
+  xrplAddress  String    @unique
+  email        String?   @unique
+  name         String?
+  role         Role      @default(RESEARCHER)
+  institution  String?
+  createdAt    DateTime  @default(now())
 
-  sessions    Session[]
-  instruments Instrument[]
+  sessions     Session[]
+  instruments  Instrument[]
+  notifications Notification[]
 }
 
 model Instrument {
-  id          String           @id @default(uuid())
-  name        String
-  type        InstrumentType
-  status      InstrumentStatus @default(ONLINE)
-  location    String
-  price       Float            // Prix affiché sur le site
-  rateUnit    String           // "per_min" ou "per_shot"
-  specs       Json?            // Flexible: {"aperture": "600mm"} etc.
+  id           String           @id @default(uuid())
+  name         String
+  type         InstrumentType
+  status       InstrumentStatus @default(ONLINE)
+  location     String
+  country      String           // Requis par ton code
+  priceXRP     Float            // Ton code cherche priceXRP
+  rateUnit     String           
+  specs        Json?            
   
-  providerId  String?
-  provider    User?            @relation(fields: [providerId], references: [id])
+  providerId   String?
+  provider     User?            @relation(fields: [providerId], references: [id])
 
-  createdAt   DateTime         @default(now())
-  sessions    Session[]
+  createdAt    DateTime         @default(now())
+  sessions     Session[]
 }
 
 model Session {
-  id           String        @id @default(uuid())
-  userId       String
-  instrumentId String
+  id              String        @id @default(uuid())
+  userId          String
+  instrumentId    String
+  
+  escrowType      EscrowType    @default(ESCROW) // Requis par ton code
+  status          SessionStatus @default(PENDING)
+  durationSec     Int           // Ton code cherche durationSec, pas duration
+  actualSec       Float?        // Requis par ton code
+  xrpSpent        Float?        // Requis par ton code
+  totalCost       Float?
 
-  status       SessionStatus @default(PENDING)
-  duration     Int           // Temps ou nombre de tirs réservés
-  totalCost    Float         // Coût calculé pour l'affichage
+  createdAt       DateTime      @default(now())
 
-  startedAt    DateTime?
-  endedAt      DateTime?
-  createdAt    DateTime      @default(now())
+  user            User          @relation(fields: [userId], references: [id])
+  instrument      Instrument    @relation(fields: [instrumentId], references: [id])
+  claims          PaymentClaim[]
+}
 
-  user         User          @relation(fields: [userId], references: [id])
-  instrument   Instrument    @relation(fields: [instrumentId], references: [id])
+model PaymentClaim {
+  id            String   @id @default(uuid())
+  sessionId     String
+  session       Session  @relation(fields: [sessionId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
