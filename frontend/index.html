@@ -735,25 +735,39 @@ async function handleRegister() {
 }
 
 async function handleLogin() {
-  // Dans un vrai projet Web3, on ne demande pas l'email/mdp, on connecte juste le wallet.
-  // Ici, on simule l'action du wallet.
-  toast("Vérification sur la blockchain...");
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  if (!email || !password) return toast("Email et mot de passe requis");
+
+  toast("Vérification des identifiants...");
   
   try {
-    // On appelle ta vraie route de récupération: GET /users/:xrplAddress
-    const res = await fetch(`${API_URL}/users/${DEMO_WALLET_ADDRESS}`);
+    // On tape sur la nouvelle route de ton backend
+    const res = await fetch(`${API_URL}/users/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    const data = await res.json();
 
     if (res.ok) {
-      const userData = await res.json();
-      localStorage.setItem('quantum_user', DEMO_WALLET_ADDRESS);
-      toast(`Bienvenue ${userData.name || 'Chercheur'} !`);
+      toast("Connexion réussie ! 🚀");
+      
+      // On sauvegarde l'ID de l'utilisateur pour le reste de l'app
+      localStorage.setItem('quantum_user_id', data.id);
+      if (data.xrplAddress) {
+        localStorage.setItem('quantum_user', data.xrplAddress);
+      }
+      
       showPage('dashboard');
       showDP('overview');
     } else {
-      toast("Portefeuille non reconnu. Veuillez créer un compte.");
-      switchTab('register');
+      toast("❌ Erreur : " + (data.error || "Identifiants incorrects"));
     }
   } catch (err) {
+    console.error(err);
     toast("Erreur de communication avec le serveur.");
   }
 }

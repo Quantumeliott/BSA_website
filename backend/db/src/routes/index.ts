@@ -5,10 +5,6 @@
 import { Router } from 'express'
 
 import {
-  getUserByAddress, upsertUser, updateUser, getUserStats,
-} from '../controllers/user.controller'
-
-import {
   listInstruments, getInstrument, createInstrument, updateInstrumentStatus,
 } from '../controllers/instrument.controller'
 
@@ -21,6 +17,10 @@ import {
   listNotifications, markRead, markAllRead,
 } from '../controllers/notification.controller'
 
+import {
+  getUserByAddress, upsertUser, updateUser, getUserStats, loginUser
+} from '../controllers/user.controller'
+
 const router = Router()
 
 // ---- Users ----
@@ -28,6 +28,7 @@ router.get   ('/users/:xrplAddress',       getUserByAddress)
 router.get   ('/users/:xrplAddress/stats', getUserStats)
 router.post  ('/users',                    upsertUser)
 router.patch ('/users/:xrplAddress',       updateUser)
+router.post('/users/login', loginUser)
 
 // ---- Instruments ----
 router.get   ('/instruments',              listInstruments)
