@@ -677,11 +677,26 @@ window.addEventListener('resize',checkMobileBtn);
 checkMobileBtn();
 
 // =====================================================
-// CONFIGURATION API
+// AUTH & API CONNECTION
 // =====================================================
 const API_URL = "https://bsa-website.onrender.com";
 
-// --- INSCRIPTION ---
+// --- FONCTIONS VISUELLES (UI) ---
+function showAuth(tab) {
+  showPage('auth');
+  switchTab(tab || 'login');
+}
+
+function switchTab(t) {
+  ['login', 'register'].forEach(id => {
+    const tabEl = document.getElementById('tab-' + id);
+    const panelEl = document.getElementById('panel-' + id);
+    if (tabEl) tabEl.classList.toggle('active', id === t);
+    if (panelEl) panelEl.classList.toggle('active', id === t);
+  });
+}
+
+// --- FONCTIONS API (SERVEUR) ---
 async function handleRegister() {
   const name = document.getElementById('reg-name').value;
   const email = document.getElementById('reg-email').value;
@@ -712,7 +727,6 @@ async function handleRegister() {
   }
 }
 
-// --- CONNEXION ---
 async function handleLogin() {
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
@@ -730,7 +744,6 @@ async function handleLogin() {
     const data = await res.json();
 
     if(res.ok) {
-      // On stocke le token de session pour rester connecté
       localStorage.setItem('quantum_token', data.token);
       toast("Connexion réussie ✓");
       showPage('dashboard');
@@ -757,7 +770,6 @@ function walletLogin() {
     toast('Connected: rHb9...mL6 ✓');
   }, 1000);
 }
-
 // =====================================================
 // DASHBOARD PAGES
 // =====================================================
