@@ -1,5 +1,5 @@
-from nft import mint_slot, create_sell_offer, buy_slot, get_nfts
-from wallets import add_wallet
+from src.nft import mint_slot, create_sell_offer, buy_slot, get_nfts
+from src.wallets import add_wallet
 
 result_j, j_id = add_wallet('Jules','chercheur')
 result_c, c_id = add_wallet('CERN','observatoire')

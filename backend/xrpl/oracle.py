@@ -9,7 +9,7 @@ import structlog
 from xrpl.asyncio.clients import AsyncWebsocketClient
 from xrpl.wallet import Wallet
 
-import config2 as config2
+import src.config2 as config2
 from crypto_condition import JobCryptoKeys, verify_fulfillment
 from quantum_executor import execute_job, QuantumResult
 from xrpl_client import (
