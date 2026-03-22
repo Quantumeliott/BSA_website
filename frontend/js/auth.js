@@ -38,15 +38,11 @@ async function handleLogin() {
     const data = await res.json();
 
     if (res.ok) {
-      // Stocke ce qu'on a besoin pour les prochaines requêtes
-      localStorage.setItem('quantum_user_id',   data.id);
-      localStorage.setItem('quantum_user_email', data.email || email);
-      if (data.xrplAddress) localStorage.setItem('quantum_user', data.xrplAddress);
-
+      localStorage.setItem('quantum_user_id', data.id); // on stocke juste l'ID
       toast("Connexion réussie ! 🚀");
       showPage('dashboard');
       showDP('overview');
-      loadSettings(data);
+      await fetchAndLoadProfile(); // on charge le profil depuis la DB
     } else {
       toast("❌ " + (data.error || "Identifiants incorrects"));
     }
@@ -59,28 +55,40 @@ async function handleLogin() {
 function walletLogin() { handleLogin(); }
 
 function logout() {
-  localStorage.removeItem('quantum_user');
   localStorage.removeItem('quantum_user_id');
-  localStorage.removeItem('quantum_user_email');
   showPage('landing');
   toast("Déconnecté.");
 }
 
-// ---- Settings ----
+// ---- Charge le profil depuis la DB par ID ----
+async function fetchAndLoadProfile() {
+  const id = localStorage.getItem('quantum_user_id');
+  if (!id) return;
 
+  try {
+    const res = await fetch(`${API_URL}/users/${id}`);
+    if (res.ok) {
+      const user = await res.json();
+      loadSettings(user);
+    }
+  } catch { /* silencieux */ }
+}
+
+// ---- Remplit les champs settings ----
 function loadSettings(user) {
   if (!user) return;
   const n = document.getElementById('settings-name');
   const e = document.getElementById('settings-email');
   const x = document.getElementById('settings-xrpl');
-  if (n && user.name)        n.value = user.name;
-  if (e && user.email)       e.value = user.email;
-  if (x && user.xrplAddress) x.value = user.xrplAddress;
+  if (n) n.value = user.name        || '';
+  if (e) e.value = user.email       || '';
+  if (x) x.value = user.xrplAddress || '';
 }
 
+// ---- Sauvegarde via PATCH /users/:id ----
 async function saveSettings() {
-  const xrplAddress = localStorage.getItem('quantum_user');
-  if (!xrplAddress) return toast("Non connecté.");
+  const id = localStorage.getItem('quantum_user_id');
+  if (!id) return toast("Non connecté.");
 
   const name  = document.getElementById('settings-name')?.value;
   const email = document.getElementById('settings-email')?.value;
@@ -89,30 +97,20 @@ async function saveSettings() {
   toast("Sauvegarde...");
 
   try {
-    // PATCH /users/:xrplAddress — endpoint déjà existant dans le backend
-    const res = await fetch(`${API_URL}/users/${xrplAddress}`, {
+    const res = await fetch(`${API_URL}/users/${id}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ name, email, xrplAddress: xrpl }),
     });
-
-    if (res.ok) {
-      if (xrpl) localStorage.setItem('quantum_user', xrpl);
-      toast("✓ Profil mis à jour !");
-    } else {
+    if (res.ok) toast("✓ Profil mis à jour !");
+    else {
       const data = await res.json();
       toast("Erreur : " + (data.error || "Mise à jour impossible"));
     }
   } catch { toast("Le serveur ne répond pas."); }
 }
 
-// Au refresh : recharge le profil depuis GET /users/:xrplAddress
-document.addEventListener('DOMContentLoaded', async () => {
-  const xrplAddress = localStorage.getItem('quantum_user');
-  if (!xrplAddress) return;
-
-  try {
-    const res = await fetch(`${API_URL}/users/${xrplAddress}`);
-    if (res.ok) loadSettings(await res.json());
-  } catch { /* silencieux */ }
+// ---- Au refresh : recharge le profil si connecté ----
+document.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('quantum_user_id')) fetchAndLoadProfile();
 });
