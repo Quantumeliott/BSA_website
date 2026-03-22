@@ -6,8 +6,8 @@ from xrpl.models.transactions import NFTokenCreateOffer, NFTokenAcceptOffer
 from xrpl.models.transactions.nftoken_create_offer import NFTokenCreateOfferFlag
 from xrpl.models.requests import AccountNFTs
 from xrpl.utils import str_to_hex, hex_to_str
-from src.config import client
-from src.wallets import get_wallet
+from config import client
+from wallets import get_wallet
 
 def buy_and_certify(
     buyer_seed: str,

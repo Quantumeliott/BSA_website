@@ -6,7 +6,7 @@ import time
 import uuid
 from functools import partial
 
-from src.nft import buy_and_certify, mint_slot
+from nft import buy_and_certify, mint_slot
 from xrpl.asyncio.clients import AsyncWebsocketClient
 from xrpl.wallet import Wallet
 from xrpl.models.requests import AccountTx

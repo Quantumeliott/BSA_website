@@ -8,8 +8,8 @@ Usage :
 
 import argparse
 import asyncio
-from src.bridge import run_demo
-from src.bridge_tele import run_telescope_demo
+from bridge import run_demo
+from bridge_tele import run_telescope_demo
 
 def main():
     parser = argparse.ArgumentParser(description="QuantumGrid client")

@@ -3,15 +3,15 @@ import json
 import time
 from functools import partial
 
-from src.wallets import get_wallet, create_wallet
-from src.nft import mint_slot, buy_and_certify
-from src.xrpl_client import client_create_escrow, escrow_finish, EscrowJob, pay_provider
-from src.crypto_condition import JobCryptoKeys
-from src.quantum_executor import execute_job, verify_ibm_job
+from wallets import get_wallet, create_wallet
+from nft import mint_slot, buy_and_certify
+from xrpl_client import client_create_escrow, escrow_finish, EscrowJob, pay_provider
+from crypto_condition import JobCryptoKeys
+from quantum_executor import execute_job, verify_ibm_job
 from xrpl.asyncio.clients import AsyncWebsocketClient
 from xrpl.wallet import Wallet
 from xrpl.models.requests import AccountTx
-import src.config2 as config
+import config2 as config
 import uuid
 
 COMMISSION = 0.10
