@@ -117,7 +117,7 @@ async function loadInstruments() {
     }
  
     _allInstruments = instruments;
-    renderToContainer(instruments, 'landing-list', false);
+    renderToContainer(instruments.slice(0, 6), 'landing-list', false); // 6 premiers seulement
     renderToContainer(instruments, 'dash-list',    true);
  
     // Compteur dynamique depuis la DB
