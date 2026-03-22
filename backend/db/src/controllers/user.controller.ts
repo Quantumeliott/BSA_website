@@ -62,7 +62,7 @@ export async function loginUser(req: Request, res: Response) {
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) return res.status(401).json({ error: 'Identifiants incorrects' })
 
-    res.json({ id: user.id, email: user.email, xrplAddress: user.xrplAddress })
+    res.json({ id: user.id, name: user.name, email: user.email, xrplAddress: user.xrplAddress })
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' })
   }

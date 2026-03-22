@@ -38,11 +38,17 @@ async function handleLogin() {
     const data = await res.json();
 
     if (res.ok) {
-      localStorage.setItem('quantum_user_id', data.id); // on stocke juste l'ID
+      localStorage.setItem('quantum_user_id', data.id);
+      // Stocke les infos du login, puis enrichit depuis /users/id/:id
+      localStorage.setItem('quantum_user_name',  data.name        || '');
+      localStorage.setItem('quantum_user_email', data.email       || email);
+      localStorage.setItem('quantum_user_xrpl',  data.xrplAddress || '');
+
       toast("Connexion réussie ! 🚀");
       showPage('dashboard');
       showDP('overview');
-      await fetchAndLoadProfile(); // on charge le profil depuis la DB
+      loadSettings();
+      fetchAndLoadProfile(); // enrichit les settings depuis la DB
     } else {
       toast("❌ " + (data.error || "Identifiants incorrects"));
     }
@@ -55,62 +61,76 @@ async function handleLogin() {
 function walletLogin() { handleLogin(); }
 
 function logout() {
-  localStorage.removeItem('quantum_user_id');
+  ['quantum_user_id','quantum_user_name','quantum_user_email','quantum_user_xrpl']
+    .forEach(k => localStorage.removeItem(k));
   showPage('landing');
   toast("Déconnecté.");
 }
 
-// ---- Charge le profil depuis la DB par ID ----
+// ---- Charge le profil depuis GET /users/id/:id ----
 async function fetchAndLoadProfile() {
   const id = localStorage.getItem('quantum_user_id');
   if (!id) return;
 
   try {
-    const res = await fetch(`${API_URL}/users/${id}`);
+    const res = await fetch(`${API_URL}/users/id/${id}`); // route correcte
     if (res.ok) {
       const user = await res.json();
-      loadSettings(user);
+      // Met à jour localStorage avec les vraies données DB
+      localStorage.setItem('quantum_user_name',  user.name        || '');
+      localStorage.setItem('quantum_user_email', user.email       || '');
+      localStorage.setItem('quantum_user_xrpl',  user.xrplAddress || '');
+      loadSettings();
     }
   } catch { /* silencieux */ }
 }
 
 // ---- Remplit les champs settings ----
-function loadSettings(user) {
-  if (!user) return;
+function loadSettings() {
   const n = document.getElementById('settings-name');
   const e = document.getElementById('settings-email');
   const x = document.getElementById('settings-xrpl');
-  if (n) n.value = user.name        || '';
-  if (e) e.value = user.email       || '';
-  if (x) x.value = user.xrplAddress || '';
+  if (n) n.value = localStorage.getItem('quantum_user_name')  || '';
+  if (e) e.value = localStorage.getItem('quantum_user_email') || '';
+  if (x) x.value = localStorage.getItem('quantum_user_xrpl')  || '';
 }
 
-// ---- Sauvegarde via PATCH /users/:id ----
+// ---- Sauvegarde via PATCH /users/:xrplAddress ----
 async function saveSettings() {
-  const id = localStorage.getItem('quantum_user_id');
-  if (!id) return toast("Non connecté.");
-
+  const id    = localStorage.getItem('quantum_user_id');
   const name  = document.getElementById('settings-name')?.value;
   const email = document.getElementById('settings-email')?.value;
   const xrpl  = document.getElementById('settings-xrpl')?.value;
 
+  if (!id) return toast("Non connecté.");
   toast("Sauvegarde...");
 
   try {
-    const res = await fetch(`${API_URL}/users/${id}`, {
+    // On utilise l'xrpl si dispo, sinon on essaie par id
+    const target = xrpl || id;
+    const res = await fetch(`${API_URL}/users/${target}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ name, email, xrplAddress: xrpl }),
     });
-    if (res.ok) toast("✓ Profil mis à jour !");
-    else {
+
+    if (res.ok) {
+      localStorage.setItem('quantum_user_name',  name  || '');
+      localStorage.setItem('quantum_user_email', email || '');
+      localStorage.setItem('quantum_user_xrpl',  xrpl  || '');
+      loadSettings();
+      toast("✓ Profil mis à jour !");
+    } else {
       const data = await res.json();
       toast("Erreur : " + (data.error || "Mise à jour impossible"));
     }
   } catch { toast("Le serveur ne répond pas."); }
 }
 
-// ---- Au refresh : recharge le profil si connecté ----
+// ---- Au refresh : recharge depuis localStorage puis DB ----
 document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('quantum_user_id')) fetchAndLoadProfile();
+  if (localStorage.getItem('quantum_user_id')) {
+    loadSettings();       // affiche ce qu'on a immédiatement
+    fetchAndLoadProfile(); // puis enrichit depuis la DB
+  }
 });
