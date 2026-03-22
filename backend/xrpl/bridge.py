@@ -5,13 +5,13 @@ import sys
 import os
 from functools import partial
 
-from src.wallets import add_wallet, get_wallet
-from src.nft import mint_slot, create_sell_offer, buy_slot
+from backend.xrpl.wallets import add_wallet, get_wallet
+from backend.xrpl.nft import mint_slot, create_sell_offer, buy_slot
 
-import src.config2 as config
-from src.crypto_condition import JobCryptoKeys
-from src.quantum_executor import execute_job
-from src.xrpl_client import client_create_escrow, escrow_finish, EscrowJob, pay_provider
+import backend.xrpl.config2 as config
+from backend.xrpl.crypto_condition import JobCryptoKeys
+from backend.xrpl.quantum_executor import execute_job
+from backend.xrpl.xrpl_client import client_create_escrow, escrow_finish, EscrowJob, pay_provider
 from xrpl.asyncio.clients import AsyncWebsocketClient
 from xrpl.wallet import Wallet
 

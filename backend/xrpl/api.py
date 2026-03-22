@@ -1,7 +1,7 @@
 from xrpl.models.requests import AccountInfo, AccountLines, AccountOffers, AccountNFTs
-from src.nft import get_nfts, buy_and_certify
-from src.wallets import create_wallet
-from src.config import client
+from backend.xrpl.nft import get_nfts, buy_and_certify
+from backend.xrpl.wallets import create_wallet
+from backend.xrpl.config import client
 from xrpl.utils import drops_to_xrp
 from flask import Flask, jsonify, request
 from flask_cors import CORS

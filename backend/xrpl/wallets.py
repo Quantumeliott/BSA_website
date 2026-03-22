@@ -1,7 +1,7 @@
 import json
 import os
 from xrpl.wallet import Wallet, generate_faucet_wallet
-from src.config import client
+from backend.xrpl.config import client
 
 def create_wallet() -> dict:
     wallet = generate_faucet_wallet(client, debug=True)
