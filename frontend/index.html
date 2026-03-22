@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuantumGrid — Scientific Infrastructure, Unlocked</title>
+  <title>OpenGate — Scientific Infrastructure, Unlocked</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
@@ -15,7 +15,7 @@
 ================================================ -->
 <div id="page-landing" class="page active">
   <nav class="nav">
-    <div class="nav-logo">DeSciEbj</div>
+    <div class="nav-logo">Open<span>Gate</span></div>
     <ul class="nav-links">
       <li><a href="#sec-market">Marketplace</a></li>
       <li><a href="#sec-how">How It Works</a></li>
@@ -39,7 +39,7 @@
     <div class="hero-orb"></div>
     <p class="hero-eye">DePIN Science Infrastructure — Powered by XRPL</p>
     <h1>Scientific<br>Hardware<br><em>Unlocked.</em></h1>
-    <p class="hero-sub">A $10M telescope sits idle <strong>30% of the time</strong>. A researcher in Lagos can't access it. We fix that — trustless, instant, pay-per-second via the XRP Ledger.</p>
+    <p class="hero-sub">Today, renting scientific equipment across borders requires contracts, bank transfers, and weeks of admin. We replace all of that with a 3-second XRPL transaction.</p>
     <div class="hero-ctas">
       <button class="btn btn-cyan" onclick="showAuth('register')">Start for Free →</button>
       <button class="btn btn-ghost" onclick="document.getElementById('sec-market').scrollIntoView({behavior:'smooth'})">Browse Instruments</button>
@@ -78,7 +78,7 @@
   </div>
  
   <footer>
-    <div class="f-logo">Quantum<span>Grid</span></div>
+    <div class="f-logo">Open<span>Gate</span></div>
     <div class="f-tag">Science should depend on talent, not budget.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge">Built on XRPL</span><span class="badge dim">Testnet</span></div>
   </footer>
@@ -88,10 +88,10 @@
      ② AUTH
 ================================================ -->
 <div id="page-auth" class="page">
-  <nav class="nav"><div class="nav-logo">Quantum<span>Grid</span></div><div class="nav-right"><button class="nav-btn" onclick="showPage('landing')">← Back</button></div></nav>
+  <nav class="nav"><div class="nav-logo">Open<span>Gate</span></div><div class="nav-right"><button class="nav-btn" onclick="showPage('landing')">← Back</button></div></nav>
   <div class="auth-wrap">
     <button class="auth-back" onclick="showPage('landing')">Back to home</button>
-    <div class="auth-logo">Quantum<span>Grid</span></div>
+    <div class="auth-logo">Open<span>Gate</span></div>
     <p class="auth-headline">Access the world's scientific instruments.</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
@@ -99,9 +99,6 @@
     </div>
  
     <div class="auth-panel active" id="panel-login">
-      <button class="wallet-btn" onclick="walletLogin()"><div class="wallet-icon"></div>Connect XRPL Wallet</button>
-      <p class="wallet-note">Crossmark · XUMM · Ledger</p>
-      <div class="divider">or continue with email</div>
       <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="researcher@university.edu"></div>
       <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
       <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="handleLogin()">Sign In →</button>
@@ -109,12 +106,10 @@
     </div>
  
     <div class="auth-panel" id="panel-register">
-      <button class="wallet-btn" onclick="walletLogin()"><div class="wallet-icon"></div>Connect with XRPL Wallet</button>
-      <p class="wallet-note">Instant — no email required</p>
-      <div class="divider">or sign up with email</div>
       <div class="field"><label>Full Name</label><input type="text" id="reg-name" placeholder="Dr. Ada Lovelace"></div>
       <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="researcher@university.edu"></div>
       <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="Min. 8 characters"></div>
+      <div class="field"><label>Role</label><select id="reg-role"><option value="RESEARCHER">Researcher</option><option value="PROVIDER">Instrument Provider</option></select></div>
       <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="handleRegister()">Create Account →</button>
       <p class="auth-switch">Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a></p>
     </div>
@@ -128,7 +123,7 @@
   <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
  
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">Quantum<span>Grid</span></div>
+    <div class="sidebar-logo">Open<span>Gate</span></div>
     <nav class="sidebar-nav">
       <div class="sidebar-section">Main</div>
       <a class="sidebar-item active" href="#" onclick="showDP('overview');return false"><span class="ico">◈</span>Overview</a>
