@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuantumGrid — Scientific Infrastructure, Unlocked</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;900&family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* =====================================================
+   TOKENS
+===================================================== */
+:root {
+  --bg:         #04040a;
+  --bg-card:    #080810;
+  --bg-card2:   #0d0d1a;
+  --bg-sidebar: #060610;
+  --cyan:       #00e5ff;
+  --orange:     #ff6b35;
+  --green:      #39ff14;
+  --red:        #ff3860;
+  --text:       #d8d8f0;
+  --text-dim:   #6868a0;
+  --border:     rgba(0,229,255,.12);
+  --border-hot: rgba(0,229,255,.35);
+  --pad:        clamp(16px, 4vw, 48px);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'IBM Plex Mono',monospace;
+  overflow-x:hidden;cursor:crosshair;min-height:100vh;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+a{color:inherit;text-decoration:none;}
+button{font-family:'IBM Plex Mono',monospace;cursor:crosshair;}
+input,select{font-family:'IBM Plex Mono',monospace;}
+
+/* =====================================================
+   ANIMATIONS
+===================================================== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes scanline{0%{top:-10%}100%{top:110%}}
+
+/* =====================================================
+   ROUTER
+===================================================== */
+.page{display:none;min-height:100vh;position:relative;z-index:1;}
+.page.active{display:block;animation:fadeIn .3s ease;}
+#page-auth.active{display:flex;}
+#page-dashboard.active{display:flex;}
+
+/* =====================================================
+   SHARED COMPONENTS
+===================================================== */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px var(--pad);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+  background:rgba(4,4,10,.85);
+}
+.nav-logo{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:.08em;color:#fff;white-space:nowrap;}
+.nav-logo span{color:var(--cyan);}
+.nav-links{display:flex;gap:28px;list-style:none;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);}
+.nav-links a:hover{color:var(--cyan);}
+.nav-right{display:flex;gap:10px;align-items:center;}
+.nav-btn{font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:9px 18px;border:1px solid var(--border);background:transparent;color:var(--text-dim);transition:.2s;}
+.nav-btn:hover{border-color:var(--border-hot);color:var(--cyan);}
+.nav-btn.primary{background:var(--cyan);color:#000;border-color:var(--cyan);}
+.nav-btn.primary:hover{background:#fff;border-color:#fff;}
+.nav-hamburger{display:none;flex-direction:column;gap:5px;padding:8px;background:none;border:none;}
+.nav-hamburger span{display:block;width:22px;height:1px;background:var(--text-dim);}
+
+.s-tag{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--cyan);margin-bottom:14px;}
+.s-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(32px,5vw,60px);font-weight:900;text-transform:uppercase;color:#fff;line-height:1;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:14px 28px;border:none;transition:.2s;white-space:nowrap;}
+.btn-cyan{background:var(--cyan);color:#000;}
+.btn-cyan:hover{background:#fff;transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,229,255,.25);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim);}
+.btn-ghost:hover{border-color:var(--border-hot);color:var(--cyan);}
+.btn-sm{padding:9px 18px;font-size:10px;}
+.btn-red{background:transparent;border:1px solid rgba(255,56,96,.3);color:var(--red);}
+
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite;}
+.dot-orange{background:var(--orange);box-shadow:0 0 6px var(--orange);}
+.dot-dim{background:var(--text-dim);}
+
+.field{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.field label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);}
+.field input,.field select{background:rgba(0,229,255,.03);border:1px solid var(--border);color:var(--text);font-size:13px;padding:12px 16px;outline:none;transition:.2s;}
+.field input:focus,.field select:focus{border-color:var(--border-hot);}
+.field input::placeholder{color:var(--text-dim);}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236868a0'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+.field select option{background:var(--bg-card);}
+
+.divider{display:flex;align-items:center;gap:14px;margin:20px 0;color:var(--text-dim);font-size:10px;letter-spacing:.15em;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* =====================================================
+   INSTRUMENT CARDS (shared)
+===================================================== */
+.icard{background:var(--bg-card);padding:28px;position:relative;overflow:hidden;transition:.3s;}
+.icard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:transparent;transition:.3s;}
+.icard:hover{background:var(--bg-card2);}
+.icard:hover::before{background:var(--cyan);}
+.icard-badge{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim);margin-bottom:18px;}
+.icard-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;color:#fff;line-height:1.1;margin-bottom:6px;}
+.icard-loc{font-size:10px;color:var(--text-dim);margin-bottom:20px;}
+.icard-specs{display:flex;flex-direction:column;gap:7px;margin-bottom:20px;padding:14px;border:1px solid var(--border);background:rgba(0,229,255,.015);}
+.spec{display:flex;justify-content:space-between;font-size:10px;}
+.spec-k{color:var(--text-dim);text-transform:uppercase;letter-spacing:.07em;}
+.spec-v{color:var(--text);}
+.icard-price{display:flex;align-items:baseline;gap:5px;margin-bottom:18px;}
+.price-n{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;color:var(--cyan);}
+.price-u{font-size:10px;color:var(--text-dim);letter-spacing:.1em;}
+.icard-btn{width:100%;background:transparent;border:1px solid var(--border-hot);color:var(--cyan);font-size:10px;letter-spacing:.15em;text-transform:uppercase;padding:11px;transition:.2s;}
+.icard-btn:hover{background:var(--cyan);color:#000;}
+.icard-btn.off{border-color:var(--border);color:var(--text-dim);cursor:not-allowed;}
+.icard-btn.off:hover{background:transparent;color:var(--text-dim);}
+
+/* =====================================================
+   ① LANDING
+===================================================== */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:120px var(--pad) 80px;position:relative;overflow:hidden;}
+.hero-orb{position:absolute;right:-80px;top:50%;transform:translateY(-50%);width:min(560px,80vw);height:min(560px,80vw);border-radius:50%;pointer-events:none;background:radial-gradient(circle at 40% 40%,rgba(0,229,255,.07),transparent 70%);border:1px solid rgba(0,229,255,.05);animation:pulse 7s ease-in-out infinite;}
+.hero-orb::before{content:'';position:absolute;inset:40px;border-radius:50%;border:1px solid rgba(0,229,255,.07);}
+.hero-orb::after{content:'';position:absolute;inset:100px;border-radius:50%;border:1px solid rgba(0,229,255,.05);}
+.hero-eye{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--cyan);margin-bottom:24px;display:flex;align-items:center;gap:10px;animation:fadeUp .6s ease .1s both;}
+.hero-eye::before{content:'';display:inline-block;width:28px;height:1px;background:var(--cyan);}
+.hero h1{font-family:'Barlow Condensed',sans-serif;font-size:clamp(56px,11vw,136px);font-weight:900;line-height:.92;text-transform:uppercase;color:#fff;max-width:900px;margin-bottom:36px;animation:fadeUp .6s ease .25s both;}
+.hero h1 em{font-style:normal;-webkit-text-fill-color:transparent;-webkit-text-stroke:1.5px var(--cyan);}
+.hero-sub{font-family:'Instrument Serif',serif;font-style:italic;font-size:clamp(16px,2.2vw,21px);color:var(--text-dim);max-width:520px;line-height:1.65;margin-bottom:44px;animation:fadeUp .6s ease .4s both;}
+.hero-sub strong{color:var(--text);font-style:normal;}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:12px;animation:fadeUp .6s ease .55s both;}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.stat{padding:28px var(--pad);border-right:1px solid var(--border);}
+.stat:last-child{border-right:none;}
+.stat-val{font-family:'Barlow Condensed',sans-serif;font-size:clamp(34px,4vw,52px);font-weight:700;color:#fff;line-height:1;margin-bottom:6px;}
+.stat-val span{color:var(--cyan);}
+.stat-lbl{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim);}
+
+.section{padding:80px var(--pad);}
+.instruments{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:40px;}
+.how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-top:40px;}
+.how-step{background:var(--bg-card);padding:36px 28px;}
+.step-n{font-family:'Barlow Condensed',sans-serif;font-size:60px;font-weight:900;line-height:1;-webkit-text-stroke:1px rgba(0,229,255,.2);color:transparent;margin-bottom:14px;}
+.step-t{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:10px;}
+.step-d{font-size:11px;line-height:1.7;color:var(--text-dim);}
+
+.cta-banner{margin:0 var(--pad) 80px;padding:48px;border:1px solid var(--border);background:linear-gradient(135deg,rgba(0,229,255,.04),transparent);display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;}
+.cta-banner h2{font-family:'Barlow Condensed',sans-serif;font-size:clamp(26px,4vw,46px);font-weight:900;text-transform:uppercase;color:#fff;line-height:1.05;}
+.cta-banner h2 span{color:var(--cyan);}
+
+footer{border-top:1px solid var(--border);padding:32px var(--pad);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.f-logo{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;letter-spacing:.08em;}
+.f-logo span{color:var(--cyan);}
+.f-tag{font-family:'Instrument Serif',serif;font-style:italic;font-size:13px;color:var(--text-dim);}
+.badge{background:rgba(0,229,255,.07);border:1px solid var(--border);padding:5px 12px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);}
+.badge.dim{color:var(--text-dim);}
+
+/* =====================================================
+   ② AUTH
+===================================================== */
+#page-auth{min-height:100vh;align-items:center;justify-content:center;padding:100px var(--pad) 40px;}
+.auth-wrap{width:100%;max-width:460px;}
+.auth-back{display:inline-flex;align-items:center;gap:8px;margin-bottom:36px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);transition:.2s;}
+.auth-back:hover{color:var(--cyan);}
+.auth-back::before{content:'←';}
+.auth-logo{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;letter-spacing:.06em;color:#fff;margin-bottom:6px;}
+.auth-logo span{color:var(--cyan);}
+.auth-headline{font-family:'Instrument Serif',serif;font-style:italic;font-size:15px;color:var(--text-dim);margin-bottom:32px;}
+.auth-tabs{display:flex;gap:1px;background:var(--border);margin-bottom:28px;}
+.auth-tab{flex:1;padding:12px;text-align:center;font-size:10px;letter-spacing:.18em;text-transform:uppercase;background:var(--bg-card);color:var(--text-dim);transition:.2s;border:none;}
+.auth-tab.active{background:rgba(0,229,255,.08);color:var(--cyan);}
+.auth-panel{display:none;}
+.auth-panel.active{display:block;}
+.wallet-btn{width:100%;padding:15px;margin-bottom:6px;background:rgba(0,229,255,.05);border:1px solid var(--border-hot);color:var(--cyan);font-size:11px;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;transition:.2s;}
+.wallet-btn:hover{background:rgba(0,229,255,.12);}
+.wallet-icon{width:18px;height:18px;border-radius:50%;background:var(--cyan);flex-shrink:0;}
+.wallet-note{font-size:10px;color:var(--text-dim);text-align:center;margin-bottom:4px;}
+.auth-switch{text-align:center;margin-top:22px;font-size:10px;color:var(--text-dim);}
+.auth-switch a{color:var(--cyan);text-decoration:underline;}
+
+/* =====================================================
+   ③ DASHBOARD
+===================================================== */
+#page-dashboard{min-height:100vh;}
+.sidebar{width:210px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:150;overflow-y:auto;transition:transform .3s;}
+.sidebar-logo{padding:22px 20px;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:.08em;}
+.sidebar-logo span{color:var(--cyan);}
+.sidebar-nav{flex:1;padding:14px 0;}
+.sidebar-section{font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--text-dim);padding:12px 20px 6px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:11px;letter-spacing:.05em;color:var(--text-dim);transition:.15s;border-left:2px solid transparent;}
+.sidebar-item:hover{color:var(--text);background:rgba(0,229,255,.04);}
+.sidebar-item.active{color:var(--cyan);border-left-color:var(--cyan);background:rgba(0,229,255,.06);}
+.sidebar-item .ico{width:14px;text-align:center;font-size:13px;}
+.sidebar-foot{padding:16px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.avatar{width:30px;height:30px;border-radius:50%;background:rgba(0,229,255,.15);border:1px solid var(--border-hot);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--cyan);flex-shrink:0;}
+.avatar-addr{font-size:10px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.avatar-net{font-size:9px;color:var(--green);letter-spacing:.1em;}
+
+.dash-main{margin-left:210px;flex:1;padding-top:64px;min-width:0;}
+.dash-topbar{position:fixed;top:0;left:210px;right:0;z-index:140;display:flex;align-items:center;justify-content:space-between;padding:0 var(--pad);height:64px;border-bottom:1px solid var(--border);backdrop-filter:blur(16px);background:rgba(4,4,10,.88);}
+.dash-topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.dash-topbar-right{display:flex;align-items:center;gap:10px;}
+.balance-pill{display:flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid var(--border);font-size:11px;}
+.balance-pill .bval{color:var(--cyan);font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}
+
+.dash-page{display:none;padding:28px var(--pad) 60px;}
+.dash-page.active{display:block;}
+
+.ov-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px;}
+.ov-card{background:var(--bg-card);border:1px solid var(--border);padding:20px;}
+.ov-lbl{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.ov-val{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:700;color:#fff;line-height:1;}
+.ov-val.c{color:var(--cyan);}
+.ov-val.g{color:var(--green);}
+.ov-sub{font-size:10px;color:var(--text-dim);margin-top:4px;}
+
+.live-session{border:1px solid var(--border-hot);background:rgba(0,229,255,.025);padding:22px;margin-bottom:28px;position:relative;overflow:hidden;}
+.live-session::before{content:'';position:absolute;top:-40%;left:-10%;width:60%;height:200%;background:linear-gradient(90deg,transparent,rgba(0,229,255,.025),transparent);animation:scanline 3.5s linear infinite;pointer-events:none;}
+.ls-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+.ls-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;}
+.ls-live{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:6px;}
+.ls-live::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s infinite;}
+.ls-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);}
+.ls-metric{background:var(--bg);padding:14px;}
+.ls-mlabel{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+.ls-mval{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:#fff;}
+.ls-mval.c{color:var(--cyan);}
+.ls-mval.o{color:var(--orange);}
+.prog{height:2px;background:rgba(0,229,255,.1);margin-top:12px;}
+.prog-fill{height:100%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);transition:width .5s;}
+
+.tx-log{margin-top:14px;max-height:130px;overflow:hidden;position:relative;}
+.tx-log::after{content:'';position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(transparent,rgba(0,229,255,.025));pointer-events:none;}
+.tx-log-hdr{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:7px;}
+.tx-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,229,255,.05);font-size:10px;animation:slideIn .3s ease;}
+.tx-hash{color:var(--text-dim);}
+.tx-amt{color:var(--cyan);}
+.tx-ok{color:var(--green);font-size:9px;letter-spacing:.1em;}
+
+.table-wrap{margin-top:18px;border:1px solid var(--border);overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:560px;}
+thead tr{border-bottom:1px solid var(--border);background:rgba(0,229,255,.03);}
+th{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);padding:11px 14px;text-align:left;white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:.15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:rgba(0,229,255,.02);}
+td{font-size:11px;padding:11px 14px;color:var(--text);}
+.pill{display:inline-block;padding:3px 9px;font-size:9px;letter-spacing:.12em;text-transform:uppercase;}
+.pill-g{background:rgba(57,255,20,.1);color:var(--green);border:1px solid rgba(57,255,20,.2);}
+.pill-o{background:rgba(255,107,53,.1);color:var(--orange);border:1px solid rgba(255,107,53,.2);}
+.pill-d{background:rgba(104,104,160,.1);color:var(--text-dim);border:1px solid rgba(104,104,160,.2);}
+
+.browse-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:20px;}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;}
+
+.wallet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.wcard{background:var(--bg-card);border:1px solid var(--border);padding:22px;}
+.wc-lbl{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.wc-val{font-family:'Barlow Condensed',sans-serif;font-size:clamp(28px,4vw,48px);font-weight:700;}
+.wc-val.c{color:var(--cyan);}
+.wc-val.o{color:var(--orange);}
+.wc-sub{font-size:10px;color:var(--text-dim);margin-top:4px;}
+.addr-box{background:rgba(0,229,255,.03);border:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;font-size:11px;color:var(--text);word-break:break-all;gap:10px;flex-wrap:wrap;}
+.copy-btn{flex-shrink:0;padding:6px 12px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:9px;letter-spacing:.1em;text-transform:uppercase;transition:.2s;}
+.copy-btn:hover{border-color:var(--border-hot);color:var(--cyan);}
+
+.settings-block{margin-bottom:28px;}
+.settings-block h3{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-info h4{font-size:12px;color:var(--text);margin-bottom:3px;}
+.toggle-info p{font-size:10px;color:var(--text-dim);}
+.toggle{width:34px;height:18px;border-radius:9px;background:var(--border);position:relative;cursor:crosshair;transition:.2s;flex-shrink:0;}
+.toggle.on{background:var(--cyan);}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#000;transition:.2s;}
+.toggle.on::after{left:18px;}
+
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:140;}
+.sidebar-overlay.show{display:block;}
+
+.toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--bg-card);border:1px solid var(--border-hot);padding:12px 20px;font-size:11px;color:var(--cyan);display:none;animation:fadeUp .3s ease;max-width:300px;}
+.toast.show{display:block;}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+@media(max-width:1100px){
+  .instruments,.browse-grid{grid-template-columns:repeat(2,1fr);}
+  .how-grid{grid-template-columns:repeat(2,1fr);}
+  .ov-row{grid-template-columns:repeat(2,1fr);}
+  .wallet-grid{grid-template-columns:1fr;}
+  .settings-grid{grid-template-columns:1fr;}
+}
+@media(max-width:768px){
+  .nav-links{display:none;}
+  .nav-hamburger{display:flex;}
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .stat{border-right:none;border-bottom:1px solid var(--border);}
+  .stat:nth-child(odd){border-right:1px solid var(--border);}
+  .stat:nth-child(3),.stat:nth-child(4){border-bottom:none;}
+  .instruments{grid-template-columns:1fr 1fr;}
+  .how-grid{grid-template-columns:1fr 1fr;}
+  .cta-banner{flex-direction:column;padding:32px 20px;}
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .dash-main{margin-left:0;}
+  .dash-topbar{left:0;}
+  .ov-row{grid-template-columns:1fr 1fr;}
+  .ls-metrics{grid-template-columns:1fr 1fr;}
+  .browse-grid{grid-template-columns:1fr 1fr;}
+  #mobile-menu-btn{display:flex!important;}
+}
+@media(max-width:520px){
+  .instruments,.browse-grid,.how-grid{grid-template-columns:1fr;}
+  .ov-row{grid-template-columns:1fr 1fr;}
+  .hero-ctas{flex-direction:column;}
+  .hero-ctas .btn{width:100%;}
+  .ls-metrics{grid-template-columns:1fr;}
+  .dash-topbar-right .blbl{display:none;}
+  .wallet-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ================================================
+     ① LANDING
+================================================ -->
+<div id="page-landing" class="page active">
+  <nav class="nav">
+    <div class="nav-logo">DeSciEbj</div>
+    <ul class="nav-links">
+      <li><a href="#sec-market">Marketplace</a></li>
+      <li><a href="#sec-how">How It Works</a></li>
+      <li><a href="#">Docs</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="nav-btn" onclick="showAuth('login')">Sign In</button>
+      <button class="nav-btn primary" onclick="showAuth('register')">Get Started</button>
+      <button class="nav-hamburger" onclick="toggleLandingMenu()"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+  <div id="landing-mobile-menu" style="display:none;position:fixed;top:65px;left:0;right:0;z-index:190;background:var(--bg-card);border-bottom:1px solid var(--border);padding:20px var(--pad);display:none;flex-direction:column;gap:14px;">
+    <a href="#sec-market" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)" onclick="closeLandingMenu()">Marketplace</a>
+    <a href="#sec-how" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)" onclick="closeLandingMenu()">How It Works</a>
+    <a href="#" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)">Docs</a>
+    <button class="btn btn-ghost btn-sm" onclick="showAuth('login');closeLandingMenu()">Sign In</button>
+    <button class="btn btn-cyan btn-sm" onclick="showAuth('register');closeLandingMenu()">Get Started</button>
+  </div>
+
+  <section class="hero">
+    <div class="hero-orb"></div>
+    <p class="hero-eye">DePIN Science Infrastructure — Powered by XRPL</p>
+    <h1>Scientific<br>Hardware<br><em>Unlocked.</em></h1>
+    <p class="hero-sub">A $10M telescope sits idle <strong>30% of the time</strong>. A researcher in Lagos can't access it. We fix that — trustless, instant, pay-per-second via the XRP Ledger.</p>
+    <div class="hero-ctas">
+      <button class="btn btn-cyan" onclick="showAuth('register')">Start for Free →</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('sec-market').scrollIntoView({behavior:'smooth'})">Browse Instruments</button>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val">847<span>+</span></div><div class="stat-lbl">Instruments Listed</div></div>
+    <div class="stat"><div class="stat-val">3<span>s</span></div><div class="stat-lbl">Avg Settlement</div></div>
+    <div class="stat"><div class="stat-val">0<span>%</span></div><div class="stat-lbl">Platform Custody</div></div>
+    <div class="stat"><div class="stat-val">62<span>+</span></div><div class="stat-lbl">Countries</div></div>
+  </div>
+
+  <section class="section" id="sec-market">
+    <p class="s-tag">// Available Now</p>
+    <h2 class="s-title">Live Instruments</h2>
+    <div class="instruments" id="landing-list"></div>
+  </section>
+
+  <section class="section" id="sec-how" style="padding-top:0">
+    <p class="s-tag">// Protocol</p>
+    <h2 class="s-title">How It Works</h2>
+    <div class="how-grid">
+      <div class="how-step"><div class="step-n">01</div><div class="step-t">Connect & Browse</div><div class="step-d">Connect your XRPL wallet or create an account. No KYC, no bank account needed anywhere in the world.</div></div>
+      <div class="how-step"><div class="step-n">02</div><div class="step-t">Lock Escrow</div><div class="step-d">XRP locked in a native XRPL Escrow or Payment Channel. Provider can't access funds until delivery is confirmed.</div></div>
+      <div class="how-step"><div class="step-n">03</div><div class="step-t">Use. Pay per second.</div><div class="step-d">Telescope session delivers images. Quantum computers execute circuit shots — each one decrements your balance live.</div></div>
+      <div class="how-step"><div class="step-n">04</div><div class="step-t">Auto Settlement</div><div class="step-d">Escrow releases at session end. Provider is paid exactly for what was used. Surplus returned instantly on-chain.</div></div>
+    </div>
+  </section>
+
+  <div class="cta-banner">
+    <h2>Science should depend on<br><span>talent</span>, not budget.</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+      <button class="btn btn-cyan" onclick="showAuth('register')">Create Free Account →</button>
+      <button class="btn btn-ghost btn-sm" onclick="showAuth('login')">Already have an account</button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="f-logo">Quantum<span>Grid</span></div>
+    <div class="f-tag">Science should depend on talent, not budget.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge">Built on XRPL</span><span class="badge dim">Testnet</span></div>
+  </footer>
+</div>
+
+<!-- ================================================
+     ② AUTH
+================================================ -->
+<div id="page-auth" class="page">
+  <nav class="nav"><div class="nav-logo">Quantum<span>Grid</span></div><div class="nav-right"><button class="nav-btn" onclick="showPage('landing')">← Back</button></div></nav>
+  <div class="auth-wrap">
+    <button class="auth-back" onclick="showPage('landing')">Back to home</button>
+    <div class="auth-logo">Quantum<span>Grid</span></div>
+    <p class="auth-headline">Access the world's scientific instruments.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <div class="auth-panel active" id="panel-login">
+      <button class="wallet-btn" onclick="walletLogin()"><div class="wallet-icon"></div>Connect XRPL Wallet</button>
+      <p class="wallet-note">Crossmark · XUMM · Ledger</p>
+      <div class="divider">or continue with email</div>
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="researcher@university.edu"></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
+      <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="handleLogin()">Sign In →</button>
+      <p class="auth-switch">No account? <a href="#" onclick="switchTab('register')">Create one free</a></p>
+    </div>
+
+    <div class="auth-panel" id="panel-register">
+      <button class="wallet-btn" onclick="walletLogin()"><div class="wallet-icon"></div>Connect with XRPL Wallet</button>
+      <p class="wallet-note">Instant — no email required</p>
+      <div class="divider">or sign up with email</div>
+      <div class="field"><label>Full Name</label><input type="text" id="reg-name" placeholder="Dr. Ada Lovelace"></div>
+      <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="researcher@university.edu"></div>
+      <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="Min. 8 characters"></div>
+      <div class="field"><label>Role</label><select id="reg-role"><option value="RESEARCHER">Researcher</option><option value="PROVIDER">Instrument Provider</option></select></div>
+      <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="handleRegister()">Create Account →</button>
+      <p class="auth-switch">Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================
+     ③ DASHBOARD
+================================================ -->
+<div id="page-dashboard" class="page">
+  <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Quantum<span>Grid</span></div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">Main</div>
+      <a class="sidebar-item active" href="#" onclick="showDP('overview');return false"><span class="ico">◈</span>Overview</a>
+      <a class="sidebar-item" href="#" onclick="showDP('browse');return false"><span class="ico">⊕</span>Browse</a>
+      <a class="sidebar-item" href="#" onclick="showDP('bookings');return false"><span class="ico">◻</span>My Sessions</a>
+      <div class="sidebar-section">Account</div>
+      <a class="sidebar-item" href="#" onclick="showDP('wallet');return false"><span class="ico">◇</span>Wallet</a>
+      <a class="sidebar-item" href="#" onclick="showDP('settings');return false"><span class="ico">⊘</span>Settings</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="avatar">A</div>
+      <div><div class="avatar-addr">rHb9...mL6</div><div class="avatar-net">● Testnet</div></div>
+    </div>
+  </aside>
+
+  <div class="dash-main">
+    <div class="dash-topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="nav-hamburger" id="mobile-menu-btn" style="display:none;padding:0" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+        <span class="dash-topbar-title" id="dp-title">Overview</span>
+      </div>
+      <div class="dash-topbar-right">
+        <div class="balance-pill"><span class="blbl" style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)">Balance&nbsp;</span><span class="bval">248.5</span><span style="font-size:10px;color:var(--text-dim)">XRP</span></div>
+        <button class="nav-btn" onclick="logout()">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="dash-page active" id="dp-overview">
+      <div class="ov-row">
+        <div class="ov-card"><div class="ov-lbl">XRP Balance</div><div class="ov-val c">248.5</div><div class="ov-sub">≈ $142.30 USD</div></div>
+        <div class="ov-card"><div class="ov-lbl">Sessions Run</div><div class="ov-val">17</div><div class="ov-sub">Across 4 instruments</div></div>
+        <div class="ov-card"><div class="ov-lbl">XRP Spent</div><div class="ov-val">31.4</div><div class="ov-sub">This month</div></div>
+        <div class="ov-card"><div class="ov-lbl">Active Now</div><div class="ov-val g">1</div><div class="ov-sub">Hα Solar Array T24</div></div>
+      </div>
+
+      <div class="live-session">
+        <div class="ls-hdr">
+          <span class="ls-name">Hα Solar Array T24 — Atacama</span>
+          <span class="ls-live">Session Active</span>
+        </div>
+        <div class="ls-metrics">
+          <div class="ls-metric">
+            <div class="ls-mlabel">Elapsed</div>
+            <div class="ls-mval" id="d-timer">00:00</div>
+            <div style="font-size:10px;color:var(--text-dim)">of 30:00</div>
+            <div class="prog"><div class="prog-fill" id="d-bar2" style="width:0%;background:var(--orange);box-shadow:0 0 8px var(--orange)"></div></div>
+          </div>
+          <div class="ls-metric">
+            <div class="ls-mlabel">XRP Spent</div>
+            <div class="ls-mval c" id="d-spent">0.000</div>
+            <div style="font-size:10px;color:var(--text-dim)">@ 0.48/min</div>
+            <div class="prog"><div class="prog-fill" id="d-bar1" style="width:0%"></div></div>
+          </div>
+          <div class="ls-metric">
+            <div class="ls-mlabel">Escrow Remaining</div>
+            <div class="ls-mval o" id="d-remain">14.400</div>
+            <div style="font-size:10px;color:var(--text-dim)">auto-refund on end</div>
+          </div>
+        </div>
+        <div class="tx-log" id="d-tx-log">
+          <div class="tx-log-hdr">Payment Channel Claims</div>
+        </div>
+      </div>
+
+      <p class="s-tag">// Recent Activity</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Instrument</th><th>Type</th><th>Date</th><th>Duration</th><th>Cost</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Hα Solar Array T24</td><td>Telescope</td><td>Today</td><td>30 min</td><td>14.4 XRP</td><td><span class="pill pill-g">Live</span></td></tr>
+            <tr><td>Cat Qubit Lab Node 3</td><td>Quantum</td><td>Mar 20</td><td>240 shots</td><td>28.8 XRP</td><td><span class="pill pill-d">Done</span></td></tr>
+            <tr><td>LIBS Spectro-X2</td><td>Spectrograph</td><td>Mar 18</td><td>45 min</td><td>10.8 XRP</td><td><span class="pill pill-d">Done</span></td></tr>
+            <tr><td>Photonic QPU X8</td><td>Quantum</td><td>Mar 15</td><td>80 shots</td><td>6.4 XRP</td><td><span class="pill pill-d">Done</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BROWSE -->
+    <div class="dash-page" id="dp-browse">
+      <p class="s-tag">// 847 instruments available</p>
+      <h2 class="s-title">Browse</h2>
+      <div class="filter-row">
+        <button class="btn btn-cyan btn-sm">All</button>
+        <button class="btn btn-ghost btn-sm">Telescope</button>
+        <button class="btn btn-ghost btn-sm">Quantum</button>
+        <button class="btn btn-ghost btn-sm">Spectrograph</button>
+        <button class="btn btn-ghost btn-sm">Radio</button>
+      </div>
+      <div class="browse-grid" id="dash-list"></div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="dash-page" id="dp-bookings">
+      <p class="s-tag">// All time</p>
+      <h2 class="s-title" style="margin-bottom:20px">My Sessions</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Instrument</th><th>Type</th><th>Date</th><th>Duration</th><th>Cost</th><th>Tx Hash</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Hα Solar Array T24</td><td>Telescope</td><td>Mar 21</td><td>30 min</td><td>14.4 XRP</td><td style="color:var(--cyan);font-size:10px">0xA1B2...C3D4</td><td><span class="pill pill-g">Live</span></td></tr>
+            <tr><td>Cat Qubit Lab Node 3</td><td>Quantum</td><td>Mar 20</td><td>240 shots</td><td>28.8 XRP</td><td style="color:var(--cyan);font-size:10px">0xE5F6...7890</td><td><span class="pill pill-d">Done</span></td></tr>
+            <tr><td>LIBS Spectro-X2</td><td>Spectrograph</td><td>Mar 18</td><td>45 min</td><td>10.8 XRP</td><td style="color:var(--cyan);font-size:10px">0xA2C4...D1F2</td><td><span class="pill pill-d">Done</span></td></tr>
+            <tr><td>Photonic QPU X8</td><td>Quantum</td><td>Mar 15</td><td>80 shots</td><td>6.4 XRP</td><td style="color:var(--cyan);font-size:10px">0xB3D5...E2F3</td><td><span class="pill pill-d">Done</span></td></tr>
+            <tr><td>Hα Solar Array T24</td><td>Telescope</td><td>Mar 10</td><td>20 min</td><td>9.6 XRP</td><td style="color:var(--cyan);font-size:10px">0xC4E6...F3G4</td><td><span class="pill pill-d">Done</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- WALLET -->
+    <div class="dash-page" id="dp-wallet">
+      <p class="s-tag">// XRPL Testnet</p>
+      <h2 class="s-title" style="margin-bottom:22px">Wallet</h2>
+      <div class="wallet-grid">
+        <div class="wcard"><div class="wc-lbl">XRP Balance</div><div class="wc-val c">248.5</div><div class="wc-sub">≈ $142.30 USD</div></div>
+        <div class="wcard"><div class="wc-lbl">Locked in Escrow</div><div class="wc-val o">14.4</div><div class="wc-sub">Current active session</div></div>
+      </div>
+      <p class="s-tag">// Your Address</p>
+      <div class="addr-box"><span>rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh</span><button class="copy-btn" onclick="copyAddr()">Copy</button></div>
+      <p class="s-tag" style="margin-top:24px">// Transaction History</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Amount</th><th>Counterparty</th><th>Date</th><th>Hash</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill pill-o">Escrow Lock</span></td><td style="color:var(--orange)">−14.40 XRP</td><td style="font-size:10px;color:var(--text-dim)">rAtacama...T24</td><td>Today</td><td style="color:var(--cyan);font-size:10px">0xA1B2...C3D4</td></tr>
+            <tr><td><span class="pill pill-d">Refund</span></td><td style="color:var(--green)">+3.60 XRP</td><td style="font-size:10px;color:var(--text-dim)">rETHZ...Qubit</td><td>Mar 20</td><td style="color:var(--cyan);font-size:10px">0xF7G8...H9I0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="dash-page" id="dp-settings">
+      <p class="s-tag">// Account</p>
+      <h2 class="s-title" style="margin-bottom:28px">Settings</h2>
+      <div class="settings-block">
+        <h3>Profile</h3>
+        <div class="settings-grid">
+          <div class="field"><label>Display Name</label><input type="text" value="Dr. Ada Lovelace"></div>
+          <div class="field"><label>Email</label><input type="email" value="ada@eth.ch"></div>
+          <div class="field"><label>Role</label><select><option>Researcher</option><option>Student</option><option>Provider</option></select></div>
+          <div class="field"><label>Institution</label><input type="text" value="ETH Zurich"></div>
+        </div>
+        <button class="btn btn-cyan btn-sm" onclick="toast('Profile saved!')">Save Changes</button>
+      </div>
+      <div class="settings-block">
+        <h3>Notifications</h3>
+        <div class="toggle-row"><div class="toggle-info"><h4>Session Start</h4><p>Notify when instrument session begins</p></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div class="toggle-info"><h4>Session End</h4><p>Notify and show delivery receipt</p></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div class="toggle-info"><h4>Escrow Released</h4><p>Confirm on-chain settlement</p></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div class="toggle-info"><h4>Low Balance Warning</h4><p>Alert when balance drops below 20 XRP</p></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <button class="btn btn-red btn-sm" onclick="logout()">Sign Out</button>
+    </div>
+  </div><!-- /dash-main -->
+</div><!-- /dashboard -->
+
+<!-- BOOKING MODAL -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(4,4,10,.92);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);" onclick="closeModal(event)">
+  <div style="background:var(--bg-card);border:1px solid var(--border-hot);width:100%;max-width:430px;padding:32px;" onclick="event.stopPropagation()">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:4px" id="m-name">Instrument</div>
+    <div style="font-size:10px;color:var(--text-dim);margin-bottom:20px" id="m-type">Escrow · Trustless</div>
+    <div style="padding:14px;border:1px solid var(--border);background:rgba(0,229,255,.02);margin-bottom:18px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;gap:10px;font-size:10px;align-items:center"><div style="width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);flex-shrink:0"></div><span style="color:var(--text-dim)"><strong style="color:var(--text)">Lock</strong> — XRP locked on-chain</span></div>
+      <div style="display:flex;gap:10px;font-size:10px;align-items:center"><div style="width:7px;height:7px;border-radius:50%;border:1px solid var(--border-hot);flex-shrink:0"></div><span style="color:var(--text-dim)"><strong style="color:var(--text)">Session</strong> — Instrument activated</span></div>
+      <div style="display:flex;gap:10px;font-size:10px;align-items:center"><div style="width:7px;height:7px;border-radius:50%;border:1px solid var(--border-hot);flex-shrink:0"></div><span style="color:var(--text-dim)"><strong style="color:var(--text)">Deliver</strong> — Oracle validates</span></div>
+      <div style="display:flex;gap:10px;font-size:10px;align-items:center"><div style="width:7px;height:7px;border-radius:50%;border:1px solid var(--border-hot);flex-shrink:0"></div><span style="color:var(--text-dim)"><strong style="color:var(--text)">Release</strong> — Provider paid, surplus returned</span></div>
+    </div>
+    <div class="field"><label>Duration (minutes)</label><input type="number" value="30" min="10" max="180" id="m-dur" oninput="updateCost()"></div>
+    <div class="field"><label>Estimated Cost</label><div style="font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:700;color:var(--cyan)" id="m-cost">14.40 XRP</div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">Unused XRP auto-refunded</div></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-cyan" style="flex:1" onclick="confirmBook()">Confirm & Lock Escrow</button>
+      <button class="btn btn-ghost" style="padding:14px 16px" onclick="document.getElementById('modal').style.display='none'">✕</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================
+// 1. ROUTER & UI (Interface visuelle)
+// =====================================================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+  checkMobileBtn();
+}
+
+function checkMobileBtn() {
+  const btn = document.getElementById('mobile-menu-btn');
+  if (btn) btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+}
+window.addEventListener('resize', checkMobileBtn);
+checkMobileBtn();
+
+function showAuth(tab) {
+  showPage('auth');
+  switchTab(tab || 'login');
+}
+
+function switchTab(t) {
+  ['login', 'register'].forEach(id => {
+    const tabEl = document.getElementById('tab-' + id);
+    const panelEl = document.getElementById('panel-' + id);
+    if (tabEl) tabEl.classList.toggle('active', id === t);
+    if (panelEl) panelEl.classList.toggle('active', id === t);
+  });
+}
+
+// =====================================================
+// 2. AUTHENTICATION & API (Connexion au Backend)
+// =====================================================
+const API_URL = "https://bsa-website.onrender.com/api"; // Modifie par /api à la fin si tu as configuré un préfixe dans Express
+
+// L'adresse de démo pour simuler le wallet XRPL connecté
+const DEMO_WALLET_ADDRESS = "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh";
+
+async function handleRegister() {
+  const name = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+
+  if (!name || !email || !password) return toast("Champs obligatoires manquants !");
+  
+  toast("Création de votre profil...");
+  
+  try {
+    const res = await fetch(`${API_URL}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        email: email, 
+        password: password,
+        name: name // On envoie le nom pour personnaliser le dashboard
+      })
+    });
+    
+    const data = await res.json();
+
+    if (res.ok) {
+      toast("Bienvenue ! Connectez-vous maintenant.");
+      switchTab('login');
+    } else {
+      toast("Erreur: " + (data.error || "Inscription impossible"));
+    }
+  } catch (err) {
+    toast("Le serveur ne répond pas.");
+  }
+}
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  if (!email || !password) return toast("Email et mot de passe requis");
+
+  toast("Vérification des identifiants...");
+  
+  try {
+    // On tape sur la nouvelle route de ton backend
+    const res = await fetch(`${API_URL}/users/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      toast("Connexion réussie ! 🚀");
+      
+      // On sauvegarde l'ID de l'utilisateur pour le reste de l'app
+      localStorage.setItem('quantum_user_id', data.id);
+      if (data.xrplAddress) {
+        localStorage.setItem('quantum_user', data.xrplAddress);
+      }
+      
+      showPage('dashboard');
+      showDP('overview');
+    } else {
+      toast("❌ Erreur : " + (data.error || "Identifiants incorrects"));
+    }
+  } catch (err) {
+    console.error(err);
+    toast("Erreur de communication avec le serveur.");
+  }
+}
+
+async function walletLogin() {
+  // Le bouton "Connect XRPL Wallet" déclenche la même logique que handleLogin
+  handleLogin();
+}
+
+function logout() {
+  localStorage.removeItem('quantum_user');
+  showPage('landing');
+  toast("Portefeuille déconnecté.");
+}
+
+// =====================================================
+// 3. DASHBOARD & INTERFACE LOGIC
+// =====================================================
+const dpTitles = {overview: 'Overview', browse: 'Browse Instruments', bookings: 'My Sessions', wallet: 'Wallet', settings: 'Settings'};
+
+function showDP(id) {
+  document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('dp-' + id);
+  if(target) target.classList.add('active');
+  
+  const titleEl = document.getElementById('dp-title');
+  if(titleEl) titleEl.textContent = dpTitles[id] || id;
+  
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  closeSidebar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('show');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('show');
+}
+
+let landingMenuOpen = false;
+function toggleLandingMenu() {
+  landingMenuOpen = !landingMenuOpen;
+  const m = document.getElementById('landing-mobile-menu');
+  if(m) m.style.display = landingMenuOpen ? 'flex' : 'none';
+}
+
+function closeLandingMenu() {
+  landingMenuOpen = false;
+  const m = document.getElementById('landing-mobile-menu');
+  if(m) m.style.display = 'none';
+}
+
+// Logique du chronomètre de la session Live
+let sec = 0;
+const TOTAL = 1800, RATE = 0.48, TOTAL_XRP = 14.4;
+setInterval(() => {
+  sec++;
+  const m = Math.floor(sec / 60).toString().padStart(2, '0'), s = (sec % 60).toString().padStart(2, '0');
+  const spent = (sec / 60) * RATE, rem = Math.max(0, TOTAL_XRP - spent);
+  const p1 = Math.min(100, (spent / TOTAL_XRP) * 100), p2 = Math.min(100, (sec / TOTAL) * 100);
+  
+  const el = id => document.getElementById(id);
+  if (el('d-timer')) el('d-timer').textContent = `${m}:${s}`;
+  if (el('d-spent')) el('d-spent').textContent = spent.toFixed(3);
+  if (el('d-remain')) el('d-remain').textContent = rem.toFixed(3);
+  if (el('d-bar1')) el('d-bar1').style.width = p1 + '%';
+  if (el('d-bar2')) el('d-bar2').style.width = p2 + '%';
+  
+  if (sec % 30 === 0 && el('d-tx-log')) {
+    const hash = '0x' + Math.random().toString(16).slice(2, 10).toUpperCase() + '...';
+    const row = document.createElement('div');
+    row.className = 'tx-row';
+    row.innerHTML = `<span class="tx-hash">${hash}</span><span class="tx-amt">−${spent.toFixed(3)} XRP</span><span class="tx-ok">✓</span>`;
+    el('d-tx-log').appendChild(row);
+  }
+}, 1000);
+
+let _rate = 0.48, _type = 'telescope';
+function showBookModal(name, rate, type) {
+  _rate = parseFloat(rate); _type = type;
+  document.getElementById('m-name').textContent = name;
+  document.getElementById('m-type').textContent = type === 'quantum' ? 'Payment Channel · Pay per Shot' : 'XRPL Escrow · Time-locked';
+  updateCost();
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal(e) { 
+  if (e.target === document.getElementById('modal')) document.getElementById('modal').style.display = 'none'; 
+}
+
+function updateCost() { 
+  const d = parseInt(document.getElementById('m-dur').value) || 30; 
+  document.getElementById('m-cost').textContent = (d * _rate).toFixed(2) + ' XRP'; 
+}
+
+function confirmBook() { 
+  document.getElementById('modal').style.display = 'none'; 
+  toast('✓ Escrow soumis sur XRPL Testnet'); 
+}
+
+function copyAddr() {
+  navigator.clipboard.writeText(DEMO_WALLET_ADDRESS)
+    .then(() => toast('Adresse copiée !'))
+    .catch(() => toast('Échec de la copie'));
+}
+
+let toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg; 
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+async function loadInstruments() {
+  try {
+    const response = await fetch(`${API_URL}/instruments`);
+    if (!response.ok) throw new Error("Erreur lors du fetch");
+
+    const data = await response.json();
+    // Le controller renvoie { instruments: [...], meta: {...} }
+    // On extrait le tableau, ou on utilise data si c'est déjà un tableau
+    const instruments = Array.isArray(data) ? data : (data.instruments ?? []);
+
+    renderToContainer(instruments, 'landing-list', false);
+    renderToContainer(instruments, 'dash-list', true);
+
+  } catch (error) {
+    console.error("Erreur d'affichage :", error);
+  }
+}
+
+function renderToContainer(data, containerId, isDashboard) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = data.map(inst => {
+    // Gestion de l'agenda (on transforme le JSON en petits badges)
+    let agendaHTML = '';
+    try {
+      const slots = typeof inst.agenda === 'string' ? JSON.parse(inst.agenda) : inst.agenda;
+      if (Array.isArray(slots)) {
+        agendaHTML = `<div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:8px;">` + 
+          slots.map(s => `<span style="font-size:9px; background:rgba(0,229,255,0.1); color:var(--cyan); padding:2px 5px; border-radius:3px; border:1px solid var(--border);">${s}</span>`).join('') + 
+          `</div>`;
+      }
+    } catch(e) { /* Pas d'agenda ou format simple */ }
+
+    return `
+      <div class="icard">
+        ${inst.image ? `<img src="${inst.image}" style="width:100%; height:120px; object-fit:cover; border-radius:6px; margin-bottom:12px; border:1px solid var(--border);">` : ''}
+        
+        <div class="icard-badge">
+          <span class="dot dot-green"></span>
+          ONLINE — ${inst.type}
+        </div>
+        
+        <div class="icard-name">${inst.name}</div>
+        <div class="icard-loc">📍 ${inst.location}, ${inst.country}</div>
+        
+        ${agendaHTML}
+
+        <div class="icard-price" style="margin-top:15px;">
+          <span class="price-n">${inst.priceXRP}</span>
+          <span class="price-u">XRP / session</span>
+        </div>
+
+        <button class="icard-btn" onclick="${isDashboard ? `showBookModal('${inst.name}', ${inst.priceXRP}, '${inst.type.toLowerCase()}')` : `showAuth('register')`}">
+          ${isDashboard ? 'Reserve →' : 'Get Started →'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+// On lance le chargement dès que la page est prête
+window.addEventListener('DOMContentLoaded', loadInstruments);
+</script>
+</body>
+</html>
