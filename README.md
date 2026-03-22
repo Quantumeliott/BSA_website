@@ -1,159 +1,325 @@
-# QuantumGrid 🔭⚛️
+# OpenGate
 
-> DePIN marketplace for scientific instruments — powered by the XRP Ledger.
-> Pay-per-second access to telescopes, quantum computers, and rare lab equipment.
-> No banks. No borders. Trustless by design.
+A decentralized marketplace for renting scientific instruments — telescopes, quantum computers, synchrotrons — from research institutions around the world.
 
----
+Researchers pay directly on the XRPL blockchain. A trustless oracle verifies delivery before releasing payment. Every transaction is public and verifiable on-chain.
 
-## Project Structure
-
-```
-quantumgrid/
-├── frontend/                   # Static web app (HTML + CSS + JS)
-│   ├── index.html              # Main entry point
-│   ├── css/
-│   │   ├── variables.css       # Design tokens, reset, shared animations
-│   │   ├── nav.css             # Navigation bar
-│   │   ├── hero.css            # Hero section + stats bar
-│   │   ├── marketplace.css     # Instrument cards grid
-│   │   ├── session.css         # Live session demo panel
-│   │   ├── modal.css           # Booking modal
-│   │   └── how.css             # How it works + footer
-│   └── js/
-│       ├── main.js             # Entry point — wires everything together
-│       ├── session.js          # Live session timer + Payment Channel sim
-│       ├── modal.js            # Booking modal logic
-│       └── wallet.js           # XRPL wallet connection (Crossmark / XUMM)
-│
-└── backend/
-    ├── xrpl/
-    │   ├── escrow.js           # XRPL EscrowCreate / EscrowFinish / EscrowCancel
-    │   └── paymentChannel.js   # XRPL PaymentChannelCreate / signClaim / claimPayment
-    └── oracle/
-        ├── oracle.h            # Oracle class declaration
-        ├── oracle.cpp          # Oracle implementation (session mgmt, BLAKE2b, HTTP)
-        ├── main.cpp            # HTTP server exposing Oracle REST API
-        └── CMakeLists.txt      # Build config (nlohmann/json, cpp-httplib, curl, openssl)
-```
+🌐 **Live demo:** https://bsa-website-five.vercel.app
+!!! The live demo didn't have time to be finished !!!!
 
 ---
 
 ## Architecture
 
+Three independent services working together:
+
 ```
-┌──────────────────────────────────────────────────────┐
-│              FRONTEND (browser)                       │
-│   index.html + CSS modules + JS modules              │
-│   Wallet: Crossmark / XUMM                           │
-└────────────┬────────────────────────┬────────────────┘
-             │                        │
-   ┌─────────▼──────────┐   ┌────────▼───────────────┐
-   │   XRPL Testnet      │   │   Oracle (C++ server)  │
-   │                     │   │   :8080                │
-   │ • EscrowCreate      │   │                        │
-   │ • EscrowFinish      │   │ POST /sessions/start   │
-   │ • PayChanCreate     │   │ POST /sessions/shot    │
-   │ • PayChanClaim      │   │ POST /sessions/finalise│
-   └─────────────────────┘   └────────────────────────┘
+┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
+│   Frontend          │     │   Backend (Node.js) │     │   XRPL Layer        │
+│   Vercel            │────▶│   Render            │────▶│   Render            │
+│   HTML/CSS/JS       │     │   Express + Prisma  │     │   Flask + xrpl-py   │
+│   bsa-website       │     │   PostgreSQL        │     │   bsa-xrpl          │
+└─────────────────────┘     └─────────────────────┘     └─────────────────────┘
 ```
 
-### Flow — Telescope (Escrow)
-1. Frontend calls Oracle `POST /sessions/start` → gets `condition_hex`
-2. Frontend creates `EscrowCreate` on XRPL with `condition_hex`
-3. Oracle activates instrument session
-4. Session runs, images delivered
-5. Oracle calls `POST /sessions/finalise` → returns `fulfillment_hex`
-6. Provider submits `EscrowFinish` with `fulfillment_hex` → paid ✅
-7. If provider fails → user calls `EscrowCancel` after expiry
+### Three actors
 
-### Flow — Quantum (Payment Channel)
-1. Frontend opens `PaymentChannelCreate` on XRPL (budget locked)
-2. For each shot: user signs off-chain claim (`signClaim`)
-3. Signed claim sent to Oracle → executes QASM circuit
-4. Oracle returns measurement results
-5. At session end: provider submits last claim (`claimPayment`) → paid ✅
-6. User requests channel close → surplus refunded
+- **Researcher** — browses instruments, pays in XRP, receives NFT proof
+- **Provider (e.g. CERN)** — delivers the service (quantum compute or telescope observation)
+- **Oracle** — cryptographic judge: verifies delivery and releases payment trustlessly
+
+### Payment flow
+
+```
+Researcher pays Provider in XRP
+        ↓
+Researcher mints NFT receipt (proof of payment, on-chain)
+        ↓
+[If oracle job] Researcher creates cryptographic escrow
+        ↓
+[If oracle job] Oracle executes the job (quantum circuit or telescope)
+        ↓
+[If oracle job] EscrowFinish → 90% to Provider + 10% Oracle commission
+        ↓
+Researcher mints NFT result (proof of delivery, on-chain)
+```
+
+### Cryptographic mechanism
+
+Each job uses a **PREIMAGE-SHA-256** condition (ASN.1 XRPL format). The oracle generates a random secret (preimage), computes the public condition and embeds it in the escrow. The preimage is only revealed after delivery is verified — this is the trustless guarantee. Neither party can cheat.
 
 ---
 
-## Setup
+## Services
 
-### Frontend
-```bash
-# No build step needed — pure HTML/CSS/JS modules
-cd frontend
-# Serve with any static server:
-npx serve .
-# or
-python3 -m http.server 3000
-```
+### Direct booking (`job_type: "direct"`)
 
-### XRPL Backend
-```bash
-cd backend/xrpl
-npm install xrpl
-# Use escrow.js and paymentChannel.js as modules in your Node.js backend
-```
+Simple XRP payment + NFT receipt. Used for telescopes, weather stations, microscopes, and any resource that doesn't require oracle validation.
 
-### Oracle (C++)
-```bash
-cd backend/oracle
+### Quantum computing (`job_type: "quantum"`)
 
-# Install system dependencies
-sudo apt install libcurl4-openssl-dev libssl-dev cmake build-essential
+The researcher submits a QASM circuit. The oracle executes it on Qiskit Aer (simulator) or IBM Quantum (real hardware). Results are published on-chain in the EscrowFinish memos with the IBM verification URL.
 
-# Build
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
+- Bell State circuit by default (2 qubits, quantum entanglement)
+- Compatible with IBM Quantum via qiskit-ibm-runtime 0.43+
+- Verification: IBM DONE status + counts consistency check
 
-# Run (simulation mode by default)
-SIMULATION_MODE=true ./oracle
-# Oracle listens on :8080
-```
+### Telescope observation (`job_type: "telescope"`)
 
-### Environment Variables (Oracle)
-| Variable | Description | Default |
-|---|---|---|
-| `ORACLE_PRIVATE_KEY` | Ed25519 private key hex for signing receipts | — |
-| `ORACLE_XRPL_ADDRESS` | Oracle's XRPL r-address | — |
-| `INSTRUMENT_API_URL` | Instrument hardware API endpoint | `http://localhost:9000` |
-| `INSTRUMENT_API_KEY` | Hardware API auth key | — |
-| `SIMULATION_MODE` | `true` = use Qiskit simulator, no real hardware | `true` |
+The researcher uses an interactive terminal interface (curses) to point a telescope at 3 targets using arrow keys. The operator photographs and delivers FITS images. The oracle verifies each image via integrity hash.
+
+- Terminal interface with star map
+- 10 famous sky objects: Orion Nebula, Andromeda Galaxy, Pleiades...
+- Timeout protection: if delivery fails, escrow is cancelled automatically
+
+Note: on the website, only JamesWebb and IBM are valid for a demo.
 
 ---
 
-## XRPL Network
+## Repository structure
 
-- **Testnet**: `wss://s.altnet.rippletest.net:51233`
-- **Explorer**: https://testnet.xrpl.org
-- **Faucet**: https://faucet.altnet.rippletest.net
+```
+BSA_website/
+├── frontend/               # Vanilla HTML/CSS/JS — hosted on Vercel
+│   ├── index.html
+│   ├── css/
+│   └── js/
+│       ├── auth.js         # Authentication
+│       ├── config.js       # API URLs and constants
+│       ├── instruments.js  # Instrument catalogue
+│       ├── wallet.js       # Wallet management
+│       └── ...
+│
+├── backend/                # Node.js + Express — hosted on Render
+│   └── db/
+│       ├── prisma/         # Database schema - hosted on Supabase
+│       ├── src/            # API routes
+│       ├── package.json
+│       └── tsconfig.json
+│
+└── xrpl/                   # Python Flask + xrpl-py — hosted on Render
+    ├── src/
+    │   ├── api.py              # Flask server — HTTP endpoints
+    │   ├── config.py           # XRPL testnet connection
+    │   ├── nft.py              # NFT transactions + payments
+    │   ├── wallets.py          # Wallet creation and reconstruction
+    │   ├── bridge2.py          # Full quantum oracle flow
+    │   ├── bridge_tele.py      # Full telescope oracle flow
+    │   ├── client.py           # CLI launcher
+    │   ├── config2.py          # Oracle config (env variables)
+    │   ├── crypto_condition.py # XRPL cryptographic conditions
+    │   ├── oracle.py           # Main oracle loop
+    │   ├── quantum_executor.py # Qiskit circuit execution
+    │   └── xrpl_client.py      # Escrow XRPL transactions
+    ├── requirements.txt
+    ├── Procfile
+    └── .env
+```
 
 ---
 
-## Tech Stack
+## Frontend
 
-| Layer | Tech |
+Vanilla HTML/CSS/JS single-page app hosted on Vercel.
+
+Researchers can create an account, browse available instruments, and book sessions directly from the platform. Each instrument has defined time slots, a location, and a price in XRP per session. Once booked, the session is visible in the user's dashboard.
+
+**Running locally:** open `frontend/index.html` in a browser — no build step required.
+
+---
+
+## Backend
+
+Node.js + Express API hosted on Render, connected to a PostgreSQL database managed through Prisma.
+
+The database stores users, instruments, and sessions. Users have an email, a hashed password, and an XRPL wallet address generated at signup. Instruments belong to providers and carry metadata like type, location, agenda, and pricing. Sessions link a user to an instrument and track the status, cost, and transaction hash.
+
+**Running locally:**
+
+```bash
+cd backend/db
+cp .env.example .env   # add your DATABASE_URL
+npm install
+npx prisma migrate dev
+npm run dev
+```
+
+---
+
+## XRPL Layer
+
+Python Flask API hosted on Render. Handles all blockchain logic — wallet creation, NFT minting, payments, and oracle flows.
+
+### Installation
+
+```bash
+cd xrpl
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Environment variables
+
+Create a `.env` file in the `xrpl/` directory:
+
+```
+ORACLE_WALLET_SEED=sXXXXXXXXXXXXXXXX
+ORACLE_ADDRESS=rXXXXXXXXXXXXXXXX
+XRPL_WS_URL=wss://s.altnet.rippletest.net:51233
+USE_SIMULATOR=true
+QUANTUMGRID_TAG=42000
+MIN_ESCROW_DROPS=1000000
+MAX_SHOTS=8192
+LOG_LEVEL=INFO
+```
+
+| Variable | Description |
 |---|---|
-| Frontend | HTML5 + CSS modules + ES modules (no framework) |
-| Wallet | Crossmark / XUMM |
-| XRPL | `xrpl.js` v3 |
-| Oracle server | C++20 + cpp-httplib + nlohmann/json |
-| Crypto | OpenSSL (BLAKE2b, SHA-256, Ed25519) |
-| HTTP client | libcurl |
+| `ORACLE_WALLET_SEED` | Oracle wallet seed **(required)** |
+| `ORACLE_ADDRESS` | Oracle public address |
+| `XRPL_WS_URL` | XRPL WebSocket URL |
+| `USE_SIMULATOR` | `true` = local Qiskit, `false` = real IBM |
+| `IBM_QUANTUM_TOKEN` | IBM Cloud Quantum API key |
+| `IBM_BACKEND` | IBM backend (e.g. `ibm_fez`) |
+
+### Start the API
+
+```bash
+python3 -m src.api
+```
+
+API runs on `http://localhost:5001`.
+
+### Endpoints
+
+#### `GET /new_wallet`
+
+Creates a new XRPL wallet on testnet.
+
+**Response:**
+```json
+{
+  "address": "rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "seed": "sXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}
+```
+
+⚠️ The seed is returned only once — store it immediately in the database.
 
 ---
 
-## Hackathon Demo Checklist
+#### `GET /users_infos/<address>`
 
-- [ ] Wallet connects via Crossmark on XRPL Testnet
-- [ ] EscrowCreate submitted and visible on testnet.xrpl.org
-- [ ] Payment Channel opened with 2-3 signed claims
-- [ ] Oracle running in simulation mode (Qiskit results)
-- [ ] Live session panel showing XRP decrementing in real time
-- [ ] On-chain receipt/memo visible in Explorer
+Returns public information about a wallet.
+
+**Response:**
+```json
+{
+  "address": "rXXX",
+  "balance_xrp": 84.99978,
+  "nfts": [
+    {
+      "NFTokenID": "000800001575E...",
+      "URI": "observatory=Geneva&units=30&tx_hash=...",
+      "NFTokenTaxon": 1
+    }
+  ]
+}
+```
 
 ---
 
-*Built at hackathon 2025 — DePIN Science, powered by XRPL*
+#### `POST /payment`
+
+Full payment flow. Behavior depends on `job_type`.
+
+**Direct booking:**
+```json
+{
+  "job_type": "direct",
+  "buyer_seed": "sXXX",
+  "observatory_address": "rXXX",
+  "observatory_id": "observatory_geneva",
+  "units": 30,
+  "currency": "MIN",
+  "date": "2026-03-22",
+  "price_xrp_per_unit": 0.1
+}
+```
+
+**Quantum oracle:**
+```json
+{
+  "job_type": "quantum",
+  "buyer_seed": "sXXX",
+  "observatory_address": "rXXX",
+  "amount_xrp": 1.0
+}
+```
+
+**Telescope oracle:**
+```json
+{
+  "job_type": "telescope",
+  "buyer_seed": "sXXX",
+  "observatory_address": "rXXX",
+  "amount_xrp": 1.0,
+  "captures": [
+    {
+      "id": "a1b2c3d4",
+      "ra": 83.82,
+      "dec": -5.39,
+      "name": "Orion Nebula",
+      "filters": ["R", "G", "B"],
+      "url": "https://telescope.cern.ch/abc.fits",
+      "hash": "a3f9b2c1d4e5f6a7"
+    }
+  ]
+}
+```
+
+### CLI launcher
+
+Test oracle flows directly without the API:
+
+```bash
+# Quantum circuit
+python3 -m src.client quantum \
+  --seed sXXXXXXXXXXXXXXXX \
+  --provider rXXXXXXXXXXXXXXXX \
+  --amount 1.0
+
+# Interactive telescope
+python3 -m src.client telescope \
+  --seed sXXXXXXXXXXXXXXXX \
+  --provider rXXXXXXXXXXXXXXXX \
+  --amount 1.0
+```
+
+---
+
+## On-chain verification
+
+All transactions are public on the XRPL testnet. EscrowFinish memos contain the full result: quantum counts, result hash, IBM job ID, and IBM verification URL.
+
+- XRPL testnet explorer: https://testnet.xrpl.org
+- IBM Quantum verification: `https://quantum.ibm.com/jobs/{ibm_job_id}`
+
+**Example on-chain flow:**
+1. `EscrowCreate` — Researcher locks 1 XRP
+2. `EscrowFinish` — Oracle reveals the fulfillment
+3. `Payment` — Oracle sends 0.90 XRP to provider
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | HTML / CSS / JavaScript — Vercel |
+| Backend | Node.js, Express, Prisma, PostgreSQL — Render |
+| Blockchain | xrpl-py ≥ 2.4.0, XRPL testnet |
+| Oracle | Python asyncio, PREIMAGE-SHA-256 ASN.1 |
+| Quantum | Qiskit ≥ 1.0, Qiskit Aer, qiskit-ibm-runtime 0.43+ |
+| NFTs | XRPL NFTokenMint — receipt + result proofs |
