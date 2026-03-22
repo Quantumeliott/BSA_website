@@ -15,12 +15,14 @@ async function handleRegister() {
   const password = document.getElementById('reg-password').value;
 
   if (!name || !email || !password) return toast("Champs obligatoires manquants !");
-  toast("Création de votre profil...");
+  toast("⏳ Génération de votre wallet XRPL...");
 
   try {
     // 1. Génère le wallet XRPL
     const walletRes  = await fetch(`${XRPL_API_URL}/new_wallet`);
     const walletData = await walletRes.json();
+
+    toast("🔗 Wallet créé — enregistrement du compte...");
 
     // 2. Crée le compte en DB avec l'adresse XRPL
     const res  = await fetch(`${API_URL}/users`, {
