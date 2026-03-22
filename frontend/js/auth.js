@@ -86,9 +86,9 @@ async function handleLogin() {
       toast("Connexion réussie ! 🚀");
       showPage('dashboard');
       showDP('overview');
-      loadSettings();
+      // fetchAndLoadProfile gère loadSettings + loadXRPLData
       fetchAndLoadProfile();
-      loadXRPLData(); // charge la balance XRP réelle
+      loadSessions();
     } else {
       toast("❌ " + (data.error || "Identifiants incorrects"));
     }
@@ -133,8 +133,49 @@ async function loadXRPLData() {
     set('wallet-addr-display', xrpl);
     set('sidebar-addr',   xrpl.slice(0,6) + '...' + xrpl.slice(-4));
 
+    // Mise à jour transactions wallet depuis les sessions
+    loadWalletTx();
+
   } catch (err) {
     console.warn('[XRPL] Impossible de charger la balance:', err);
+  }
+}
+
+// =============================================
+// WALLET — historique des transactions depuis sessions DB
+// =============================================
+async function loadWalletTx() {
+  const userId = localStorage.getItem('quantum_user_id');
+  const tbody  = document.getElementById('wallet-tx-tbody');
+  if (!userId || !tbody) return;
+
+  try {
+    const res  = await fetch(`${API_URL}/sessions?userId=${userId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const sessions = data.sessions ?? [];
+
+    if (!sessions.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:20px;font-size:11px;">No transactions yet</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = sessions.map(s => {
+      const hash  = s.xrplTxHash ? s.xrplTxHash.slice(0,6) + '...' + s.xrplTxHash.slice(-4) : '—';
+      const date  = new Date(s.createdAt).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+      const price = '−' + (s.priceXRP || 0).toFixed(2) + ' XRP';
+      const counterparty = s.instrument?.name ? s.instrument.name.slice(0,12) + '...' : '—';
+      return `<tr>
+        <td><span class="pill pill-o">Escrow Lock</span></td>
+        <td style="color:var(--orange)">${price}</td>
+        <td style="font-size:10px;color:var(--text-dim)">${counterparty}</td>
+        <td>${date}</td>
+        <td style="color:var(--cyan);font-size:10px">${hash}</td>
+      </tr>`;
+    }).join('');
+
+  } catch (err) {
+    console.warn('[wallet-tx] Erreur:', err);
   }
 }
 
