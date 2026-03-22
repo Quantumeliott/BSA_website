@@ -68,7 +68,7 @@ function renderToContainer(data, containerId, isDashboard) {
 
     return `
       <div class="icard">
-        ${inst.imageUrl ? `<img src="${inst.imageUrl}" style="width:100%;height:120px;object-fit:cover;margin-bottom:12px;border:1px solid var(--border);">` : ''}
+        ${(inst.imageUrl || inst.image) ? `<img src="${inst.imageUrl || inst.image}" alt="${inst.name}" style="width:100%;height:160px;object-fit:cover;margin-bottom:16px;border:1px solid var(--border);" onerror="this.style.display='none'">` : ''}
         <div class="icard-badge">
           <span class="dot ${dot}"></span>
           ${inst.status} — ${inst.type}
