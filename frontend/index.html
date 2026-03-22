@@ -19,7 +19,6 @@
     <ul class="nav-links">
       <li><a href="#sec-market">Marketplace</a></li>
       <li><a href="#sec-how">How It Works</a></li>
-      <li><a href="#">Docs</a></li>
     </ul>
     <div class="nav-right">
       <button class="nav-btn" onclick="showAuth('login')">Sign In</button>
@@ -30,7 +29,6 @@
   <div id="landing-mobile-menu" style="display:none;position:fixed;top:65px;left:0;right:0;z-index:190;background:var(--bg-card);border-bottom:1px solid var(--border);padding:20px var(--pad);display:none;flex-direction:column;gap:14px;">
     <a href="#sec-market" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)" onclick="closeLandingMenu()">Marketplace</a>
     <a href="#sec-how" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)" onclick="closeLandingMenu()">How It Works</a>
-    <a href="#" style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)">Docs</a>
     <button class="btn btn-ghost btn-sm" onclick="showAuth('login');closeLandingMenu()">Sign In</button>
     <button class="btn btn-cyan btn-sm" onclick="showAuth('register');closeLandingMenu()">Get Started</button>
   </div>
@@ -47,7 +45,7 @@
   </section>
  
   <div class="stats">
-    <div class="stat"><div class="stat-val">847<span>+</span></div><div class="stat-lbl">Instruments Listed</div></div>
+    <div class="stat"><div class="stat-val" id="stat-instruments"><span style="font-size:32px;color:var(--text-dim)">—</span></div><div class="stat-lbl">Instruments Listed</div></div>
     <div class="stat"><div class="stat-val">3<span>s</span></div><div class="stat-lbl">Avg Settlement</div></div>
     <div class="stat"><div class="stat-val">0<span>%</span></div><div class="stat-lbl">Platform Custody</div></div>
     <div class="stat"><div class="stat-val">62<span>+</span></div><div class="stat-lbl">Countries</div></div>
@@ -90,7 +88,7 @@
 <div id="page-auth" class="page">
   <nav class="nav"><div class="nav-logo">Open<span>Gate</span></div><div class="nav-right"><button class="nav-btn" onclick="showPage('landing')">← Back</button></div></nav>
   <div class="auth-wrap">
-    <button class="auth-back" onclick="showPage('landing')">Back to home</button>
+    <button onclick="showPage('landing')" style="display:inline-flex;align-items:center;gap:10px;background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:10px 18px;margin-bottom:36px;transition:.2s;" onmouseover="this.style.borderColor='var(--border-hot)';this.style.color='var(--cyan)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)';">← Back to home</button>
     <div class="auth-logo">Open<span>Gate</span></div>
     <p class="auth-headline">Access the world's scientific instruments.</p>
     <div class="auth-tabs">
@@ -205,16 +203,14 @@
  
     <!-- BROWSE -->
     <div class="dash-page" id="dp-browse">
-      <p class="s-tag">// 847 instruments available</p>
+      <p class="s-tag" id="browse-count">// loading...</p>
       <h2 class="s-title">Browse</h2>
-      <div class="filter-row" id="filter-row">
-        <button class="btn btn-cyan btn-sm filter-btn active" onclick="filterInstruments('ALL', this)">All</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('TELESCOPE', this)">Telescope</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('QUANTUM', this)">Quantum</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('SPECTROGRAPH', this)">Spectrograph</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('SYNCHROTRON', this)">Synchrotron</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('CRYO-EM', this)">Cryo-EM</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('RADIO', this)">Radio</button>
+      <div class="filter-row">
+        <button class="btn btn-cyan btn-sm">All</button>
+        <button class="btn btn-ghost btn-sm">Telescope</button>
+        <button class="btn btn-ghost btn-sm">Quantum</button>
+        <button class="btn btn-ghost btn-sm">Spectrograph</button>
+        <button class="btn btn-ghost btn-sm">Radio</button>
       </div>
       <div class="browse-grid" id="dash-list"></div>
     </div>
