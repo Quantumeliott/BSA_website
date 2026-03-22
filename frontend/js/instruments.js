@@ -96,6 +96,7 @@ async function loadInstruments() {
       return;
     }
  
+    _allInstruments = instruments;
     renderToContainer(instruments, 'landing-list', false);
     renderToContainer(instruments, 'dash-list',    true);
  
