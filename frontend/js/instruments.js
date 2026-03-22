@@ -96,6 +96,7 @@ async function loadInstruments() {
       return;
     }
  
+    _allInstruments = instruments;
     renderToContainer(instruments, 'landing-list', false);
     renderToContainer(instruments, 'dash-list',    true);
  
@@ -194,6 +195,29 @@ function renderToContainer(data, containerId, isDashboard) {
       + '<button class="icard-btn ' + (busy ? 'off' : '') + '" ' + (busy ? 'disabled' : 'onclick="' + onclick + '"') + '>' + label + '</button>'
       + '</div>';
   }).join('');
+}
+ 
+// ---- Cache global + filtre ----
+let _allInstruments = [];
+ 
+function filterInstruments(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.remove('btn-cyan');
+    b.classList.add('btn-ghost');
+  });
+  btn.classList.remove('btn-ghost');
+  btn.classList.add('btn-cyan');
+ 
+  const filtered = type === 'ALL'
+    ? _allInstruments
+    : _allInstruments.filter(i => (i.type || '').toUpperCase() === type);
+ 
+  if (!filtered.length) {
+    const c = document.getElementById('dash-list');
+    if (c) c.innerHTML = '<div style="grid-column:1/-1;padding:60px;text-align:center;color:var(--text-dim);font-size:11px;letter-spacing:.1em;">No instruments found for this category.</div>';
+    return;
+  }
+  renderToContainer(filtered, 'dash-list', true);
 }
  
 if (document.readyState === 'loading') {
