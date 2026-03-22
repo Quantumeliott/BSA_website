@@ -23,14 +23,29 @@ async function loadSessions() {
       return;
     }
 
-    // Mise à jour "Locked in Escrow" = somme des sessions ACTIVE/PENDING
+    // Compteur sessions overview
+    const ovSess = document.getElementById('ov-sessions');
+    const ovSub  = document.getElementById('ov-sessions-sub');
+    if (ovSess) ovSess.textContent = sessions.length;
+    if (ovSub)  ovSub.textContent  = sessions.length === 1 ? '1 session' : sessions.length + ' sessions';
+
+    // Locked in Escrow
     const locked = sessions
       .filter(s => s.status === 'ACTIVE' || s.status === 'PENDING')
       .reduce((sum, s) => sum + (s.priceXRP || 0), 0);
-    const el = document.getElementById('wallet-escrow');
-    if (el) el.textContent = locked.toFixed(2);
+    const escrowEl = document.getElementById('wallet-escrow');
+    if (escrowEl) escrowEl.textContent = locked.toFixed(2);
 
-    // Affichage du tableau
+    // Overview recent (3 dernières)
+    const ovTbody = document.getElementById('overview-tbody');
+    if (ovTbody) {
+      ovTbody.innerHTML = sessions.slice(0, 3).map(s => {
+        const statusMap = { ACTIVE: '<span class="pill pill-g">Live</span>', PENDING: '<span class="pill pill-o">Pending</span>', COMPLETED: '<span class="pill pill-d">Done</span>', CANCELLED: '<span class="pill pill-d">Cancelled</span>' };
+        return `<tr><td>${s.instrument?.name||'—'}</td><td>${s.instrument?.type||'—'}</td><td>${new Date(s.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</td><td>${(s.priceXRP/RATE).toFixed(0)} min</td><td>${(s.priceXRP||0).toFixed(2)} XRP</td><td>${statusMap[s.status]||s.status}</td></tr>`;
+      }).join('');
+    }
+
+    // Affichage du tableau My Sessions
     tbody.innerHTML = sessions.map(s => {
       const name    = s.instrument?.name  || '—';
       const type    = s.instrument?.type  || '—';
@@ -58,9 +73,7 @@ async function loadSessions() {
       </tr>`;
     }).join('');
 
-    // Si session active → démarre le chrono live
-    const active = sessions.find(s => s.status === 'ACTIVE');
-    if (active) startLiveTimer(active);
+
 
   } catch (err) {
     console.warn('[sessions] Erreur:', err);
