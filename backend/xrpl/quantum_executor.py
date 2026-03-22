@@ -26,7 +26,7 @@ try:
 except ImportError:
     IBM_AVAILABLE = False
 
-import src.config2 as config2
+import config2 as config2
 
 logger = logging.getLogger(__name__)
 
