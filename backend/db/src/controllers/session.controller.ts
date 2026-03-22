@@ -65,7 +65,7 @@ export async function startSession(req: Request, res: Response) {
   try {
     const session = await prisma.session.update({
       where: { id: req.params.id },
-      data:  { status: 'ACTIVE', startedAt: new Date() },
+      data:  { status: 'ACTIVE' }, // Suppression de startedAt
     })
     res.json(session)
   } catch {
@@ -77,7 +77,7 @@ export async function completeSession(req: Request, res: Response) {
   try {
     const session = await prisma.session.update({
       where: { id: req.params.id },
-      data:  { status: 'COMPLETED', endedAt: new Date() },
+      data:  { status: 'COMPLETED' }, // Suppression de endedAt
     })
     res.json(session)
   } catch {
@@ -89,7 +89,7 @@ export async function cancelSession(req: Request, res: Response) {
   try {
     const session = await prisma.session.update({
       where: { id: req.params.id },
-      data:  { status: 'CANCELLED', endedAt: new Date() },
+      data:  { status: 'CANCELLED' }, // Suppression de endedAt
     })
     res.json(session)
   } catch {
