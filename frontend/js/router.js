@@ -82,3 +82,11 @@ function closeLandingMenu() {
   const m = document.getElementById('landing-mobile-menu');
   if (m) m.style.display = 'none';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const userId = localStorage.getItem('quantum_user_id');
+  if (userId) {
+    showPage('dashboard');
+    showDP('overview');
+  }
+});
