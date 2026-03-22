@@ -1,0 +1,8 @@
+xrpl-py
+flask
+flask-cors
+qiskit
+qiskit-aer
+structlog
+python-dotenv
+httpx
