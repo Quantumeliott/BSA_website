@@ -99,6 +99,13 @@ async function loadInstruments() {
     renderToContainer(instruments, 'landing-list', false);
     renderToContainer(instruments, 'dash-list',    true);
  
+    // Compteur dynamique depuis la DB
+    const total = data.meta?.total ?? instruments.length;
+    const statEl   = document.getElementById('stat-instruments');
+    const browseEl = document.getElementById('browse-count');
+    if (statEl)   statEl.innerHTML = total + '<span>+</span>';
+    if (browseEl) browseEl.textContent = '// ' + total + ' instruments available';
+ 
   } catch (error) {
     console.error('[instruments] Erreur :', error);
     const msg = error.name === 'AbortError'
