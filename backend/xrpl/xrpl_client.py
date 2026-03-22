@@ -23,7 +23,7 @@ from xrpl.utils import xrp_to_drops, drops_to_xrp
 from xrpl.asyncio.transaction import submit_and_wait
 from xrpl.models.response import Response
 
-import backend.xrpl.config2 as config2
+import config2 as config2
 
 logger = logging.getLogger(__name__)
 
