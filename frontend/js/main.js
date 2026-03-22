@@ -6,7 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Smooth scroll pour les liens d'ancrage
   document.querySelectorAll('a[href^="#"]').forEach(link => {
     link.addEventListener('click', e => {
-      const target = document.querySelector(link.getAttribute('href'));
+      const href = link.getAttribute('href');
+      if (!href || href === '#') return; // ignorer les liens vides
+      const target = document.querySelector(href);
       if (target) {
         e.preventDefault();
         target.scrollIntoView({ behavior: 'smooth' });
@@ -18,3 +20,4 @@ document.addEventListener('DOMContentLoaded', () => {
   const navCta = document.querySelector('.nav-cta');
   if (navCta) navCta.addEventListener('click', () => showAuth('login'));
 });
+ 
