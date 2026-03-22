@@ -39,12 +39,20 @@ export async function getSession(req: Request, res: Response) {
 }
 
 export async function createSession(req: Request, res: Response) {
-  const { userId, instrumentId } = req.body
-  if (!userId || !instrumentId) return res.status(400).json({ error: 'Missing required fields' })
+  const { userId, instrumentId, priceXRP, xrplTxHash } = req.body
+  if (!userId || !instrumentId || !priceXRP) {
+    return res.status(400).json({ error: 'userId, instrumentId and priceXRP are required' })
+  }
 
   try {
     const session = await prisma.session.create({
-      data: { userId, instrumentId, status: 'PENDING' },
+      data: {
+        userId,
+        instrumentId,
+        priceXRP:   parseFloat(priceXRP),
+        xrplTxHash: xrplTxHash ?? null,
+        status:     'PENDING',
+      },
       include: { instrument: { select: { name: true, type: true } } },
     })
     res.status(201).json(session)
@@ -57,7 +65,7 @@ export async function startSession(req: Request, res: Response) {
   try {
     const session = await prisma.session.update({
       where: { id: req.params.id },
-      data:  { status: 'ACTIVE' },
+      data:  { status: 'ACTIVE', startedAt: new Date() },
     })
     res.json(session)
   } catch {
@@ -69,7 +77,7 @@ export async function completeSession(req: Request, res: Response) {
   try {
     const session = await prisma.session.update({
       where: { id: req.params.id },
-      data:  { status: 'COMPLETED' },
+      data:  { status: 'COMPLETED', endedAt: new Date() },
     })
     res.json(session)
   } catch {
@@ -81,7 +89,7 @@ export async function cancelSession(req: Request, res: Response) {
   try {
     const session = await prisma.session.update({
       where: { id: req.params.id },
-      data:  { status: 'CANCELLED' },
+      data:  { status: 'CANCELLED', endedAt: new Date() },
     })
     res.json(session)
   } catch {
@@ -90,6 +98,5 @@ export async function cancelSession(req: Request, res: Response) {
 }
 
 export async function addPaymentClaim(req: Request, res: Response) {
-  // Les claims blockchain ne sont plus gérés par la base de données (Web2.5)
   res.status(201).json({ message: 'Claim tracked on XRPL' })
 }
