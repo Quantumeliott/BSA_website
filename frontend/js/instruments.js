@@ -195,7 +195,7 @@ function renderToContainer(data, containerId, isDashboard) {
     const safeName = (inst.name || '').replace(/'/g, "\\'");
     const imgSrc   = getImageSrc(inst);
     const onclick  = busy ? '' : isDashboard
-      ? "showBookModal('" + safeName + "', " + inst.priceXRP + ", '" + (inst.type || '').toLowerCase() + "')"
+      ? "showBookModal('" + safeName + "', " + inst.priceXRP + ", '" + (inst.type || '').toLowerCase() + "', '" + (inst.id || '') + "', '" + (inst.address || '') + "')"
       : "showAuth('register')";
  
     let specs = inst.specs ?? {};

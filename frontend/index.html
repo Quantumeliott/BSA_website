@@ -192,12 +192,7 @@
       <div class="table-wrap">
         <table>
           <thead><tr><th>Instrument</th><th>Type</th><th>Date</th><th>Duration</th><th>Cost</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td>Hα Solar Array T24</td><td>Telescope</td><td>Today</td><td>30 min</td><td>14.4 XRP</td><td><span class="pill pill-g">Live</span></td></tr>
-            <tr><td>Cat Qubit Lab Node 3</td><td>Quantum</td><td>Mar 20</td><td>240 shots</td><td>28.8 XRP</td><td><span class="pill pill-d">Done</span></td></tr>
-            <tr><td>LIBS Spectro-X2</td><td>Spectrograph</td><td>Mar 18</td><td>45 min</td><td>10.8 XRP</td><td><span class="pill pill-d">Done</span></td></tr>
-            <tr><td>Photonic QPU X8</td><td>Quantum</td><td>Mar 15</td><td>80 shots</td><td>6.4 XRP</td><td><span class="pill pill-d">Done</span></td></tr>
-          </tbody>
+          <tbody id="overview-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -225,13 +220,7 @@
       <div class="table-wrap">
         <table>
           <thead><tr><th>Instrument</th><th>Type</th><th>Date</th><th>Duration</th><th>Cost</th><th>Tx Hash</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td>Hα Solar Array T24</td><td>Telescope</td><td>Mar 21</td><td>30 min</td><td>14.4 XRP</td><td style="color:var(--cyan);font-size:10px">0xA1B2...C3D4</td><td><span class="pill pill-g">Live</span></td></tr>
-            <tr><td>Cat Qubit Lab Node 3</td><td>Quantum</td><td>Mar 20</td><td>240 shots</td><td>28.8 XRP</td><td style="color:var(--cyan);font-size:10px">0xE5F6...7890</td><td><span class="pill pill-d">Done</span></td></tr>
-            <tr><td>LIBS Spectro-X2</td><td>Spectrograph</td><td>Mar 18</td><td>45 min</td><td>10.8 XRP</td><td style="color:var(--cyan);font-size:10px">0xA2C4...D1F2</td><td><span class="pill pill-d">Done</span></td></tr>
-            <tr><td>Photonic QPU X8</td><td>Quantum</td><td>Mar 15</td><td>80 shots</td><td>6.4 XRP</td><td style="color:var(--cyan);font-size:10px">0xB3D5...E2F3</td><td><span class="pill pill-d">Done</span></td></tr>
-            <tr><td>Hα Solar Array T24</td><td>Telescope</td><td>Mar 10</td><td>20 min</td><td>9.6 XRP</td><td style="color:var(--cyan);font-size:10px">0xC4E6...F3G4</td><td><span class="pill pill-d">Done</span></td></tr>
-          </tbody>
+          <tbody id="sessions-tbody"></tbody>
         </table>
       </div>
     </div>
@@ -251,7 +240,7 @@
         <table>
           <thead><tr><th>Type</th><th>Amount</th><th>Counterparty</th><th>Date</th><th>Hash</th></tr></thead>
           <tbody>
-            <tr><td><span class="pill pill-o">Escrow Lock</span></td><td style="color:var(--orange)">−14.40 XRP</td><td style="font-size:10px;color:var(--text-dim)">rAtacama...T24</td><td>Today</td><td style="color:var(--cyan);font-size:10px">0xA1B2...C3D4</td></tr>
+
             <tr><td><span class="pill pill-d">Refund</span></td><td style="color:var(--green)">+3.60 XRP</td><td style="font-size:10px;color:var(--text-dim)">rETHZ...Qubit</td><td>Mar 20</td><td style="color:var(--cyan);font-size:10px">0xF7G8...H9I0</td></tr>
           </tbody>
         </table>
@@ -297,6 +286,8 @@
     </div>
     <div class="field"><label>Duration (minutes)</label><input type="number" value="30" min="10" max="180" id="m-dur" oninput="updateCost()"></div>
     <div class="field"><label>Estimated Cost</label><div style="font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:700;color:var(--cyan)" id="m-cost">14.40 XRP</div><div style="font-size:10px;color:var(--text-dim);margin-top:3px">Unused XRP auto-refunded</div></div>
+    <input type="hidden" id="m-inst-id">
+    <input type="hidden" id="m-provider-addr">
     <div style="display:flex;gap:10px">
       <button class="btn btn-cyan" style="flex:1" onclick="confirmBook()">Confirm & Lock Escrow</button>
       <button class="btn btn-ghost" style="padding:14px 16px" onclick="document.getElementById('modal').style.display='none'">✕</button>
