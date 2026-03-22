@@ -40,11 +40,20 @@ const dpTitles = {
 };
 
 function showDP(id) {
+  // Masquer toutes les pages
   document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
   const target = document.getElementById('dp-' + id);
   if (target) target.classList.add('active');
+
+  // Titre topbar
   const titleEl = document.getElementById('dp-title');
   if (titleEl) titleEl.textContent = dpTitles[id] || id;
+
+  // Sidebar actif — cherche par data-page
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.page === id);
+  });
+
   closeSidebar();
 }
 

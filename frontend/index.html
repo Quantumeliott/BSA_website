@@ -107,6 +107,7 @@
       <div class="field"><label>Full Name</label><input type="text" id="reg-name" placeholder="Dr. Ada Lovelace"></div>
       <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="researcher@university.edu"></div>
       <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="Min. 8 characters"></div>
+      <div class="field"><label>Role</label><select id="reg-role"><option value="RESEARCHER">Researcher</option><option value="PROVIDER">Instrument Provider</option></select></div>
       <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="handleRegister()">Create Account →</button>
       <p class="auth-switch">Already have an account? <a href="#" onclick="switchTab('login')">Sign in</a></p>
     </div>
@@ -123,12 +124,12 @@
     <div class="sidebar-logo">Open<span>Gate</span></div>
     <nav class="sidebar-nav">
       <div class="sidebar-section">Main</div>
-      <a class="sidebar-item active" href="#" onclick="showDP('overview');return false"><span class="ico">◈</span>Overview</a>
-      <a class="sidebar-item" href="#" onclick="showDP('browse');return false"><span class="ico">⊕</span>Browse</a>
-      <a class="sidebar-item" href="#" onclick="showDP('bookings');return false"><span class="ico">◻</span>My Sessions</a>
+      <a class="sidebar-item active" href="#" data-page="overview" onclick="showDP('overview');return false"><span class="ico">◈</span>Overview</a>
+      <a class="sidebar-item" href="#" data-page="browse" onclick="showDP('browse');return false"><span class="ico">⊕</span>Browse</a>
+      <a class="sidebar-item" href="#" data-page="bookings" onclick="showDP('bookings');return false"><span class="ico">◻</span>My Sessions</a>
       <div class="sidebar-section">Account</div>
-      <a class="sidebar-item" href="#" onclick="showDP('wallet');return false"><span class="ico">◇</span>Wallet</a>
-      <a class="sidebar-item" href="#" onclick="showDP('settings');return false"><span class="ico">⊘</span>Settings</a>
+      <a class="sidebar-item" href="#" data-page="wallet" onclick="showDP('wallet');return false"><span class="ico">◇</span>Wallet</a>
+      <a class="sidebar-item" href="#" data-page="settings" onclick="showDP('settings');return false"><span class="ico">⊘</span>Settings</a>
     </nav>
     <div class="sidebar-foot">
       <div class="avatar">A</div>
@@ -205,13 +206,11 @@
       <p class="s-tag" id="browse-count">// loading...</p>
       <h2 class="s-title">Browse</h2>
       <div class="filter-row">
-        <button class="btn btn-cyan btn-sm filter-btn" onclick="filterInstruments('ALL', this)">All</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('TELESCOPE', this)">Telescope</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('QUANTUM', this)">Quantum</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('SPECTROGRAPH', this)">Spectrograph</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('SYNCHROTRON', this)">Synchrotron</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('CRYO-EM', this)">Cryo-EM</button>
-        <button class="btn btn-ghost btn-sm filter-btn" onclick="filterInstruments('RADIO', this)">Radio</button>
+        <button class="btn btn-cyan btn-sm">All</button>
+        <button class="btn btn-ghost btn-sm">Telescope</button>
+        <button class="btn btn-ghost btn-sm">Quantum</button>
+        <button class="btn btn-ghost btn-sm">Spectrograph</button>
+        <button class="btn btn-ghost btn-sm">Radio</button>
       </div>
       <div class="browse-grid" id="dash-list"></div>
     </div>
