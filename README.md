@@ -6,7 +6,8 @@ Researchers pay directly on the XRPL blockchain. A trustless oracle verifies del
 
 🌐 **Live demo:** https://bsa-website-five.vercel.app
 !!! The live demo didn't have time to be finished !!!!
-
+So we upload last goods update of xrpl and of oracles in the directory test_oracle that is totally independent from the website.
+The backend and frontend directorys are thus a unfinished tentative to link a database/backend/frontend/xrpl/oracles.
 ---
 
 ## Architecture
