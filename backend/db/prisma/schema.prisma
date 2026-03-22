@@ -13,7 +13,7 @@ model User {
   password     String
   name         String?
   xrplAddress  String?      @unique 
-
+  createdAt DateTime @default(now())
   instruments  Instrument[]
   sessions     Session[]
 }

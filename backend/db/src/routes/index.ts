@@ -18,7 +18,7 @@ import {
 } from '../controllers/notification.controller'
 
 import {
-  getUserByAddress, upsertUser, updateUser, getUserStats, loginUser
+  getUserByAddress, upsertUser, updateUser, getUserStats, loginUser, getUserById
 } from '../controllers/user.controller'
 
 const router = Router()
@@ -29,6 +29,7 @@ router.get   ('/users/:xrplAddress/stats', getUserStats)
 router.post  ('/users',                    upsertUser)
 router.patch ('/users/:xrplAddress',       updateUser)
 router.post('/users/login', loginUser)
+router.get('/users/id/:id', getUserById)
 
 // ---- Instruments ----
 router.get   ('/instruments',              listInstruments)
