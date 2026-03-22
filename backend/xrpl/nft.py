@@ -4,8 +4,8 @@ from xrpl.transaction import submit_and_wait
 from xrpl.models.transactions.nftoken_mint import NFTokenMintFlag, NFTokenMint
 from xrpl.models.requests import AccountNFTs
 from xrpl.utils import str_to_hex, hex_to_str
-from src.config import client
-from src.wallets import get_wallet
+from backend.xrpl.config import client
+from backend.xrpl.wallets import get_wallet
 
 def buy_and_certify(
     buyer_seed: str,
