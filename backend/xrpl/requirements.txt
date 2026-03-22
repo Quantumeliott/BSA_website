@@ -6,3 +6,4 @@ qiskit-aer
 structlog
 python-dotenv
 httpx
+gunicorn
