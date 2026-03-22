@@ -61,6 +61,26 @@ function getImageSrc(inst) {
   return FALLBACK_IMAGES[inst.type] || '';
 }
  
+// ---- Cache global + filtre ----
+let _allInstruments = [];
+ 
+function filterInstruments(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.remove('btn-cyan');
+    b.classList.add('btn-ghost');
+  });
+  btn.classList.remove('btn-ghost');
+  btn.classList.add('btn-cyan');
+ 
+  const filtered = type === 'ALL'
+    ? _allInstruments
+    : _allInstruments.filter(i => (i.type || '').toUpperCase() === type);
+ 
+  const c = document.getElementById('dash-list');
+  if (!filtered.length) { if (c) c.innerHTML = ''; return; }
+  renderToContainer(filtered, 'dash-list', true);
+}
+ 
 // ---- Loaders ----
 function showLoading(containerId) {
   const c = document.getElementById(containerId);
@@ -201,24 +221,4 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', loadInstruments);
 } else {
   loadInstruments();
-}
-
-// ---- Cache global + filtre ----
-let _allInstruments = [];
-
-function filterInstruments(type, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    b.classList.remove('btn-cyan');
-    b.classList.add('btn-ghost');
-  });
-  btn.classList.remove('btn-ghost');
-  btn.classList.add('btn-cyan');
-
-  const filtered = type === 'ALL'
-    ? _allInstruments
-    : _allInstruments.filter(i => (i.type || '').toUpperCase() === type);
-
-  const c = document.getElementById('dash-list');
-  if (!filtered.length) { if (c) c.innerHTML = ''; return; }
-  renderToContainer(filtered, 'dash-list', true);
 }
