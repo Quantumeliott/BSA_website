@@ -874,17 +874,18 @@ function toast(msg) {
 async function loadInstruments() {
   try {
     const response = await fetch(`${API_URL}/instruments`);
-    const instruments = await response.json();
-
     if (!response.ok) throw new Error("Erreur lors du fetch");
 
-    // On affiche dans les deux sections
+    const data = await response.json();
+    // Le controller renvoie { instruments: [...], meta: {...} }
+    // On extrait le tableau, ou on utilise data si c'est déjà un tableau
+    const instruments = Array.isArray(data) ? data : (data.instruments ?? []);
+
     renderToContainer(instruments, 'landing-list', false);
     renderToContainer(instruments, 'dash-list', true);
 
   } catch (error) {
     console.error("Erreur d'affichage :", error);
-    // Optionnel : afficher un message d'erreur dans l'UI
   }
 }
 
