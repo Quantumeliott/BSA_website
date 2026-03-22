@@ -61,7 +61,7 @@ async function handleLogin() {
 function walletLogin() { handleLogin(); }
 
 function logout() {
-  ['quantum_user_id','quantum_user_name','quantum_user_email','quantum_user_xrpl']
+  ['quantum_user_id','quantum_user_name','quantum_user_email','quantum_user_xrpl','quantum_user_createdat']
     .forEach(k => localStorage.removeItem(k));
   showPage('landing');
   toast("Déconnecté.");
@@ -77,9 +77,10 @@ async function fetchAndLoadProfile() {
     if (res.ok) {
       const user = await res.json();
       // Met à jour localStorage avec les vraies données DB
-      localStorage.setItem('quantum_user_name',  user.name        || '');
-      localStorage.setItem('quantum_user_email', user.email       || '');
-      localStorage.setItem('quantum_user_xrpl',  user.xrplAddress || '');
+      localStorage.setItem('quantum_user_name',      user.name        || '');
+      localStorage.setItem('quantum_user_email',     user.email       || '');
+      localStorage.setItem('quantum_user_xrpl',      user.xrplAddress || '');
+      localStorage.setItem('quantum_user_createdat', user.createdAt   || '');
       loadSettings();
     }
   } catch { /* silencieux */ }
@@ -93,6 +94,11 @@ function loadSettings() {
   if (n) n.value = localStorage.getItem('quantum_user_name')  || '';
   if (e) e.value = localStorage.getItem('quantum_user_email') || '';
   if (x) x.value = localStorage.getItem('quantum_user_xrpl')  || '';
+  const d = document.getElementById('settings-createdat');
+  if (d) {
+    const raw = localStorage.getItem('quantum_user_createdat');
+    d.value = raw ? new Date(raw).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) : '—';
+  }
 }
 
 // ---- Sauvegarde via PATCH /users/:xrplAddress ----
