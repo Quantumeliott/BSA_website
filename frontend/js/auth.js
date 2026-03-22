@@ -2,6 +2,12 @@
 // auth.js — authentification + settings
 // =============================================
 
+// Seed en mémoire uniquement — jamais stocké, effacé au refresh
+let _sessionSeed = null;
+
+function getSessionSeed() { return _sessionSeed; }
+function clearSessionSeed() { _sessionSeed = null; }
+
 async function handleRegister() {
   const name     = document.getElementById('reg-name').value;
   const email    = document.getElementById('reg-email').value;
@@ -25,8 +31,10 @@ async function handleRegister() {
 async function handleLogin() {
   const email    = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
+  const seed     = document.getElementById('login-seed')?.value?.trim();
 
   if (!email || !password) return toast("Email et mot de passe requis");
+  if (!seed) return toast("Seed phrase requise");
   toast("Vérification...");
 
   try {
@@ -44,6 +52,7 @@ async function handleLogin() {
       localStorage.setItem('quantum_user_email', data.email       || email);
       localStorage.setItem('quantum_user_xrpl',  data.xrplAddress || '');
 
+      _sessionSeed = seed; // stocké en mémoire uniquement
       toast("Connexion réussie ! 🚀");
       showPage('dashboard');
       showDP('overview');
@@ -61,6 +70,7 @@ async function handleLogin() {
 function walletLogin() { handleLogin(); }
 
 function logout() {
+  clearSessionSeed(); // efface le seed de la mémoire
   ['quantum_user_id','quantum_user_name','quantum_user_email','quantum_user_xrpl','quantum_user_createdat']
     .forEach(k => localStorage.removeItem(k));
   showPage('landing');

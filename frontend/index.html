@@ -99,6 +99,8 @@
     <div class="auth-panel active" id="panel-login">
       <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="researcher@university.edu"></div>
       <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
+      <div class="field"><label>Seed Phrase</label><input type="password" id="login-seed" placeholder="word1 word2 word3 ... (12 words)" style="font-size:11px;letter-spacing:.05em;"></div>
+      <div style="font-size:9px;color:var(--text-dim);margin:-10px 0 14px;letter-spacing:.05em;">🔒 Never stored — stays in memory for this session only</div>
       <button class="btn btn-cyan" style="width:100%;margin-top:4px" onclick="handleLogin()">Sign In →</button>
       <p class="auth-switch">No account? <a href="#" onclick="switchTab('register')">Create one free</a></p>
     </div>
