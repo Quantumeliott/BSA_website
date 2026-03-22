@@ -20,7 +20,7 @@ export async function getUserByAddress(req: Request, res: Response) {
 }
 
 export async function upsertUser(req: Request, res: Response) {
-  const { email, password, name } = req.body;
+  const { email, password, name, xrplAddress } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: "Email et mot de passe requis" });
@@ -29,17 +29,16 @@ export async function upsertUser(req: Request, res: Response) {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // On utilise create au lieu d'upsert pour être plus clair sur les erreurs
     const user = await prisma.user.create({
       data: {
-        email: email,
-        password: hashedPassword,
-        name: name || null,
-        xrplAddress: null // Obligatoire pour éviter les doublons sur la démo
+        email:       email,
+        password:    hashedPassword,
+        name:        name        || null,
+        xrplAddress: xrplAddress || null,
       },
     });
 
-    res.status(201).json({ id: user.id, email: user.email });
+    res.status(201).json({ id: user.id, email: user.email, name: user.name, xrplAddress: user.xrplAddress });
   } catch (err: any) {
     // Si l'email est déjà pris, Prisma renvoie le code P2002
     if (err.code === 'P2002') {
