@@ -134,7 +134,7 @@
     </nav>
     <div class="sidebar-foot">
       <div class="avatar">A</div>
-      <div><div class="avatar-addr">rHb9...mL6</div><div class="avatar-net">● Testnet</div></div>
+      <div><div class="avatar-addr" id="sidebar-addr">—</div><div class="avatar-net">● Testnet</div></div>
     </div>
   </aside>
  
@@ -145,7 +145,7 @@
         <span class="dash-topbar-title" id="dp-title">Overview</span>
       </div>
       <div class="dash-topbar-right">
-        <div class="balance-pill"><span class="blbl" style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)">Balance&nbsp;</span><span class="bval">248.5</span><span style="font-size:10px;color:var(--text-dim)">XRP</span></div>
+        <div class="balance-pill"><span class="blbl" style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim)">Balance&nbsp;</span><span class="bval" id="nav-balance">—</span><span style="font-size:10px;color:var(--text-dim)">XRP</span></div>
         <button class="nav-btn" onclick="logout()">Sign Out</button>
       </div>
     </div>
@@ -153,7 +153,7 @@
     <!-- OVERVIEW -->
     <div class="dash-page active" id="dp-overview">
       <div class="ov-row">
-        <div class="ov-card"><div class="ov-lbl">XRP Balance</div><div class="ov-val c">248.5</div><div class="ov-sub">≈ $142.30 USD</div></div>
+        <div class="ov-card"><div class="ov-lbl">XRP Balance</div><div class="ov-val c" id="ov-balance">—</div><div class="ov-sub" id="ov-usd">≈ — USD</div></div>
         <div class="ov-card"><div class="ov-lbl">Sessions Run</div><div class="ov-val">17</div><div class="ov-sub">Across 4 instruments</div></div>
         <div class="ov-card"><div class="ov-lbl">XRP Spent</div><div class="ov-val">31.4</div><div class="ov-sub">This month</div></div>
         <div class="ov-card"><div class="ov-lbl">Active Now</div><div class="ov-val g">1</div><div class="ov-sub">Hα Solar Array T24</div></div>
@@ -241,11 +241,11 @@
       <p class="s-tag">// XRPL Testnet</p>
       <h2 class="s-title" style="margin-bottom:22px">Wallet</h2>
       <div class="wallet-grid">
-        <div class="wcard"><div class="wc-lbl">XRP Balance</div><div class="wc-val c">248.5</div><div class="wc-sub">≈ $142.30 USD</div></div>
-        <div class="wcard"><div class="wc-lbl">Locked in Escrow</div><div class="wc-val o">14.4</div><div class="wc-sub">Current active session</div></div>
+        <div class="wcard"><div class="wc-lbl">XRP Balance</div><div class="wc-val c" id="wallet-balance">—</div><div class="wc-sub" id="wallet-usd">≈ — USD</div></div>
+        <div class="wcard"><div class="wc-lbl">Locked in Escrow</div><div class="wc-val o" id="wallet-escrow">—</div><div class="wc-sub">Current active session</div></div>
       </div>
       <p class="s-tag">// Your Address</p>
-      <div class="addr-box"><span>rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh</span><button class="copy-btn" onclick="copyAddr()">Copy</button></div>
+      <div class="addr-box"><span id="wallet-addr-display">—</span><button class="copy-btn" onclick="copyAddr()">Copy</button></div>
       <p class="s-tag" style="margin-top:24px">// Transaction History</p>
       <div class="table-wrap">
         <table>
@@ -315,5 +315,25 @@
 <script src="js/instruments.js"></script>
 <script src="js/main.js"></script>
  
+
+<!-- SEED MODAL -->
+<div id="seed-modal" style="display:none;position:fixed;inset:0;background:rgba(4,4,10,.95);z-index:600;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);">
+  <div style="background:var(--bg-card);border:1px solid var(--border-hot);width:100%;max-width:480px;padding:36px;">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;color:#fff;margin-bottom:8px;">🔑 Your XRPL Wallet</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:20px;">Your wallet has been generated. <strong style="color:var(--red,#ff3860);">Write down your seed phrase now — it will never be shown again.</strong></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">XRPL Address</div>
+      <div id="new-wallet-address" style="background:rgba(0,229,255,.05);border:1px solid var(--border);padding:12px;font-size:11px;word-break:break-all;color:var(--cyan);">—</div>
+    </div>
+    <div style="margin-bottom:24px;">
+      <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Seed Phrase <span style="color:var(--red,#ff3860);">⚠ Never share this</span></div>
+      <div id="new-wallet-seed" style="background:rgba(255,56,96,.05);border:1px solid rgba(255,56,96,.3);padding:12px;font-size:11px;word-break:break-all;color:#fff;letter-spacing:.05em;">—</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-cyan" style="flex:1" onclick="confirmSeedSaved()">✓ I've saved my seed phrase</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

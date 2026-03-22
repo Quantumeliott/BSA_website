@@ -1,13 +1,14 @@
 // =============================================
-// auth.js — authentification + settings
+// auth.js — authentification + settings + xrpl
 // =============================================
 
-// Seed en mémoire uniquement — jamais stocké, effacé au refresh
 let _sessionSeed = null;
-
-function getSessionSeed() { return _sessionSeed; }
+function getSessionSeed()  { return _sessionSeed; }
 function clearSessionSeed() { _sessionSeed = null; }
 
+// =============================================
+// INSCRIPTION
+// =============================================
 async function handleRegister() {
   const name     = document.getElementById('reg-name').value;
   const email    = document.getElementById('reg-email').value;
@@ -17,17 +18,45 @@ async function handleRegister() {
   toast("Création de votre profil...");
 
   try {
+    // 1. Génère le wallet XRPL
+    const walletRes  = await fetch(`${XRPL_API_URL}/new_wallet`);
+    const walletData = await walletRes.json();
+
+    // 2. Crée le compte en DB avec l'adresse XRPL
     const res  = await fetch(`${API_URL}/users`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ email, password, name, role: 'RESEARCHER' }),
+      body:    JSON.stringify({ email, password, name, role: 'RESEARCHER', xrplAddress: walletData.address }),
     });
     const data = await res.json();
-    if (res.ok) { toast("Bienvenue ! Connectez-vous."); switchTab('login'); }
-    else toast("Erreur: " + (data.error || "Inscription impossible"));
-  } catch { toast("Le serveur ne répond pas."); }
+
+    if (res.ok) {
+      // 3. Affiche le seed une seule fois
+      showSeedModal(walletData.address, walletData.seed);
+    } else {
+      toast("Erreur: " + (data.error || "Inscription impossible"));
+    }
+  } catch (err) {
+    console.error(err);
+    toast("Le serveur ne répond pas.");
+  }
 }
 
+function showSeedModal(address, seed) {
+  document.getElementById('new-wallet-address').textContent = address;
+  document.getElementById('new-wallet-seed').textContent    = seed;
+  document.getElementById('seed-modal').style.display = 'flex';
+}
+
+function confirmSeedSaved() {
+  document.getElementById('seed-modal').style.display = 'none';
+  toast("Bienvenue ! Connectez-vous maintenant.");
+  switchTab('login');
+}
+
+// =============================================
+// CONNEXION
+// =============================================
 async function handleLogin() {
   const email    = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
@@ -46,18 +75,18 @@ async function handleLogin() {
     const data = await res.json();
 
     if (res.ok) {
-      localStorage.setItem('quantum_user_id', data.id);
-      // Stocke les infos du login, puis enrichit depuis /users/id/:id
+      localStorage.setItem('quantum_user_id',    data.id);
       localStorage.setItem('quantum_user_name',  data.name        || '');
       localStorage.setItem('quantum_user_email', data.email       || email);
       localStorage.setItem('quantum_user_xrpl',  data.xrplAddress || '');
 
-      _sessionSeed = seed; // stocké en mémoire uniquement
+      _sessionSeed = seed;
       toast("Connexion réussie ! 🚀");
       showPage('dashboard');
       showDP('overview');
       loadSettings();
-      fetchAndLoadProfile(); // enrichit les settings depuis la DB
+      fetchAndLoadProfile();
+      loadXRPLData(); // charge la balance XRP réelle
     } else {
       toast("❌ " + (data.error || "Identifiants incorrects"));
     }
@@ -70,33 +99,63 @@ async function handleLogin() {
 function walletLogin() { handleLogin(); }
 
 function logout() {
-  clearSessionSeed(); // efface le seed de la mémoire
+  clearSessionSeed();
   ['quantum_user_id','quantum_user_name','quantum_user_email','quantum_user_xrpl','quantum_user_createdat']
     .forEach(k => localStorage.removeItem(k));
   showPage('landing');
   toast("Déconnecté.");
 }
 
-// ---- Charge le profil depuis GET /users/id/:id ----
+// =============================================
+// XRPL — balance + NFTs depuis l'API Python
+// =============================================
+async function loadXRPLData() {
+  const xrpl = localStorage.getItem('quantum_user_xrpl');
+  if (!xrpl) return;
+
+  try {
+    const res  = await fetch(`${XRPL_API_URL}/users_infos/${xrpl}`);
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const balance = data.balance_xrp ?? 0;
+    const usd     = (balance * 0.57).toFixed(2); // prix approx XRP
+
+    // Mise à jour partout
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('nav-balance',    balance.toFixed(2));
+    set('ov-balance',     balance.toFixed(2));
+    set('ov-usd',         `≈ $${usd} USD`);
+    set('wallet-balance', balance.toFixed(2));
+    set('wallet-usd',     `≈ $${usd} USD`);
+    set('wallet-addr-display', xrpl);
+    set('sidebar-addr',   xrpl.slice(0,6) + '...' + xrpl.slice(-4));
+
+  } catch (err) {
+    console.warn('[XRPL] Impossible de charger la balance:', err);
+  }
+}
+
+// =============================================
+// SETTINGS
+// =============================================
 async function fetchAndLoadProfile() {
   const id = localStorage.getItem('quantum_user_id');
   if (!id) return;
-
   try {
-    const res = await fetch(`${API_URL}/users/id/${id}`); // route correcte
+    const res = await fetch(`${API_URL}/users/id/${id}`);
     if (res.ok) {
       const user = await res.json();
-      // Met à jour localStorage avec les vraies données DB
       localStorage.setItem('quantum_user_name',      user.name        || '');
       localStorage.setItem('quantum_user_email',     user.email       || '');
       localStorage.setItem('quantum_user_xrpl',      user.xrplAddress || '');
       localStorage.setItem('quantum_user_createdat', user.createdAt   || '');
       loadSettings();
+      loadXRPLData(); // recharge avec la bonne adresse
     }
   } catch { /* silencieux */ }
 }
 
-// ---- Remplit les champs settings ----
 function loadSettings() {
   const n = document.getElementById('settings-name');
   const e = document.getElementById('settings-email');
@@ -111,30 +170,26 @@ function loadSettings() {
   }
 }
 
-// ---- Sauvegarde via PATCH /users/:xrplAddress ----
 async function saveSettings() {
   const id    = localStorage.getItem('quantum_user_id');
   const name  = document.getElementById('settings-name')?.value;
   const email = document.getElementById('settings-email')?.value;
   const xrpl  = document.getElementById('settings-xrpl')?.value;
-
   if (!id) return toast("Non connecté.");
   toast("Sauvegarde...");
-
   try {
-    // On utilise l'xrpl si dispo, sinon on essaie par id
     const target = xrpl || id;
     const res = await fetch(`${API_URL}/users/${target}`, {
       method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ name, email, xrplAddress: xrpl }),
     });
-
     if (res.ok) {
       localStorage.setItem('quantum_user_name',  name  || '');
       localStorage.setItem('quantum_user_email', email || '');
       localStorage.setItem('quantum_user_xrpl',  xrpl  || '');
       loadSettings();
+      loadXRPLData();
       toast("✓ Profil mis à jour !");
     } else {
       const data = await res.json();
@@ -143,10 +198,17 @@ async function saveSettings() {
   } catch { toast("Le serveur ne répond pas."); }
 }
 
-// ---- Au refresh : recharge depuis localStorage puis DB ----
+function copyAddr() {
+  const addr = localStorage.getItem('quantum_user_xrpl') || '';
+  navigator.clipboard.writeText(addr)
+    .then(()  => toast('Adresse copiée !'))
+    .catch(()  => toast('Échec de la copie'));
+}
+
+// Au refresh
 document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('quantum_user_id')) {
-    loadSettings();       // affiche ce qu'on a immédiatement
-    fetchAndLoadProfile(); // puis enrichit depuis la DB
+    loadSettings();
+    fetchAndLoadProfile();
   }
 });
