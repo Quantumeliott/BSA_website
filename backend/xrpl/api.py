@@ -54,7 +54,7 @@ def payment():
         return jsonify(response)
 
     elif job_type == "quantum":
-        from src.bridge import run_demo
+        from bridge import run_demo
         result = run_async(run_demo(
             provider_address = data["observatory_address"],
             researcher_seed  = data["buyer_seed"],
@@ -63,7 +63,7 @@ def payment():
         return jsonify(result)
 
     elif job_type == "telescope":
-        from src.bridge_tele import run_telescope_demo
+        from bridge_tele import run_telescope_demo
         result = run_async(run_telescope_demo(
             provider_address = data["observatory_address"],
             researcher_seed  = data["buyer_seed"],
